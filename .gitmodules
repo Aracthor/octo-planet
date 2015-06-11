@@ -1,0 +1,3 @@
+[submodule "libvvgl"]
+	path = libvvgl
+	url = https://github.com/Aracthor/libvvgl.git
