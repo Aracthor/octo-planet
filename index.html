@@ -1,22 +1,36 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>OCTO-PLANET</title>
+    <head>
+        <title>OCTO-PLANET</title>
 
-    <!-- Shaders -->
-    <script id="vertex-shader" type="x-shader/x-vertex" src="shaders/basic.vert" ></script>
-    <script id="fragment-shader" type="x-shader/x-fragment" src="shaders/basic.frag" ></script>
+        <!-- Shaders -->
+        <script id="vertex-shader" type="x-shader/x-vertex" src="shaders/basic.vert" ></script>
+        <script id="fragment-shader" type="x-shader/x-fragment" src="shaders/basic.frag" ></script>
 
 
-    <!-- Lib WebGL -->
-    <script type="text/javascript" src="libvvgl/libvvgl.js" ></script>
+        <!-- Lib WebGL -->
+        <script type="text/javascript" src="libvvgl/libvvgl.js" ></script>
 
-    <script type="text/javascript" src="scripts/main.js" ></script>
-    <script type="text/javascript" src="scripts/OctoPlanet.js" ></script>
-  </head>
-  <body onload="main();">
-    <div align="center">
-      <canvas id="the-canvas" width="800" height="600" style="border: none"></canvas>
-    </div>
-  </body>
+        <!-- WebGL scripts -->
+        <script type="text/javascript" src="scripts/main.js" ></script>
+        <script type="text/javascript" src="scripts/PlanetForm.js" ></script>
+        <script type="text/javascript" src="scripts/PlanetGenerator.js" ></script>
+        <script type="text/javascript" src="scripts/OctoPlanet.js" ></script>
+
+        <!-- Forms scripts -->
+    </head>
+    <body onload="main();">
+        <div align="center">
+            <canvas id="the-canvas" width="800" height="600" style="border: none"></canvas>
+            <form id="planet-form" onsubmit="return PlanetForm.submit();">
+                <fieldset id="planet" style="width: 800px; text-align: left;">
+                    <legend>Planet creation</legend>
+                    <label for="tessellation-level">Tessellation level:</label>
+                    <input id="tessellation-level" type="text" value="5" />
+                    <br />
+                    <input type="submit" value="create" />
+                </fieldset>
+            </form>
+        </div>
+    </body>
 </html>
