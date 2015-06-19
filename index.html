@@ -13,9 +13,11 @@
 
         <!-- WebGL scripts -->
         <script type="text/javascript" src="scripts/main.js" ></script>
+        <script type="text/javascript" src="scripts/Planet.js" ></script>
         <script type="text/javascript" src="scripts/PlanetForm.js" ></script>
         <script type="text/javascript" src="scripts/PlanetGenerator.js" ></script>
         <script type="text/javascript" src="scripts/OctoPlanet.js" ></script>
+        <script type="text/javascript" src="scripts/Triangle.js" ></script>
 
         <!-- Forms scripts -->
     </head>
@@ -25,6 +27,10 @@
             <form id="planet-form" onsubmit="return PlanetForm.submit();">
                 <fieldset id="planet" style="width: 800px; text-align: left;">
                     <legend>Planet creation</legend>
+                    <label for="seed">Seed:</label>
+                    <input id="seed" type="text" />
+                    <button onclick="return PlanetForm.generateSeed();">Generate seed</button>
+                    <br />
                     <label for="tessellation-level">Tessellation level:</label>
                     <input id="tessellation-level" type="text" value="5" />
                     <br />

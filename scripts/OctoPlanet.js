@@ -31,13 +31,13 @@ OctoPlanet.prototype.manageData = function () {
 	VVGL.Application.prototype.manageData.call(this);
 };
 
-OctoPlanet.prototype.createPlanet = function (data) {
+OctoPlanet.prototype.createPlanet = function (data, seed) {
     if (this.planet !== null) {
         this.scene.getRoot().removeChild(this.planet);
     }
 
     this.getRenderer().disableBackfaceCulling();
-    this.planet = this.planetGenerator.generate(data);
+    this.planet = this.planetGenerator.generate(data, seed);
 
     this.scene.getRoot().addChild(this.planet);
 
