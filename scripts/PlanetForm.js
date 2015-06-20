@@ -6,7 +6,13 @@ PlanetForm = function () {
 
 PlanetForm.prototype.getPlanetData = function () {
     var data = {};
-    data.tessellationLevel = this.tessellationInput.value;
+    data.seed = parseInt(this.seed.value);
+    data.tessellationLevel = parseInt(this.tessellationInput.value);
+    if (isNaN(data.seed)) {
+        throw new VVGL.Exception("Invalid seed. I want a number !");
+    } else if (isNaN(data.tessellationLevel) || data.tessellationLevel < 1 || data.tessellationLevel > 8) {
+        throw new VVGL.Exception("Invalid tessellation level. I want a number between 1 and 8 !");
+    }
 
     return data;
 };
@@ -33,10 +39,17 @@ PlanetForm.generateSeed = function () {
 };
 
 PlanetForm.submit = function () {
-    var planetForm = PlanetForm.getInstance();
-    var data = planetForm.getPlanetData();
-    var seed = planetForm.seed.value;
-    VVGL.Application.access().createPlanet(data, seed);
-
+    try {
+        var planetForm = PlanetForm.getInstance();
+        var data = planetForm.getPlanetData();
+        VVGL.Application.access().createPlanet(data);
+    } catch (exception) {
+        if (exception.what) {
+            alert(exception.what());
+        } else {
+            alert(exception);
+        }
+        console.log(exception);
+    };
     return false;
 };

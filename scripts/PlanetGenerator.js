@@ -24,7 +24,7 @@ PlanetGenerator.prototype.getTrianglesList = function (tessellation) {
     for (var i in indices) {
         if (i % 3 === 0) {
             i = parseInt(i);
-            // TODO clear this dirty code
+            // TODO clear this dirty code.
             var coords = [
                 new VVGL.Vec3(isocaedreCoords[indices[i + 0] * 3], isocaedreCoords[indices[i + 0] * 3 + 1], isocaedreCoords[indices[i + 0] * 3 + 2]),
                 new VVGL.Vec3(isocaedreCoords[indices[i + 1] * 3], isocaedreCoords[indices[i + 1] * 3 + 1], isocaedreCoords[indices[i + 1] * 3 + 2]),
@@ -37,18 +37,25 @@ PlanetGenerator.prototype.getTrianglesList = function (tessellation) {
     return triangles;
 };
 
-PlanetGenerator.prototype.generate = function (data, seed) {
+PlanetGenerator.prototype.generate = function (data) {
     var planet = new Planet(this.radius);
+    var random = new VVGL.Random(parseInt(data.seed));
 
     planet.triangles = this.getTrianglesList(data.tessellationLevel);
 
     var coords = planet.getVerticesCoords();
 
     var colors = [];
+    var red, green, blue;
     for (var i = 0; i < coords.length / 3; ++i) {
-        colors.push(Math.random());
-        colors.push(Math.random());
-        colors.push(Math.random());
+        if (i % 3 === 0) {
+            red = random.randomFloat();
+            green = random.randomFloat();
+            blue = random.randomFloat();
+        }
+        colors.push(red);
+        colors.push(green);
+        colors.push(blue);
         colors.push(1.0);
     }
 
