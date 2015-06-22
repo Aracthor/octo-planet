@@ -1,28 +1,31 @@
 OctoPlanet = function (canvasId) {
 	VVGL.Application.call(this, canvasId);
-	
-	var scene = new VVGL.Scene();
+
+    var scene = new VVGL.Scene();
     this.scene = scene;
 	this.getSceneManager().addScene("mainScene", scene, true);
 	
 	var shader = VVGL.ShaderProgram.createFromFiles("vertex-shader", "fragment-shader");
+    this.shader = shader;
 	
 	var camera = new VVGL.TrackballCamera();
-	scene.getRoot().addChild(new VVGL.SceneNode(camera));
-	scene.setActiveCamera(camera);
+    scene.getRoot().addChild(new VVGL.SceneNode(camera));
+    scene.setActiveCamera(camera);
 	
 	var alight = new VVGL.AmbianceLight("aLight");
 	alight.color.r = 0.1;
 	alight.color.g = 0.1;
 	alight.color.b = 0.1;
-	scene.getRoot().addChild(new VVGL.SceneNode(alight));
+    scene.getRoot().addChild(new VVGL.SceneNode(alight));
 
 	var axis = new VVGL.Axis(10.0);
 	axis.setShader(shader);
+    this.axis = axis;
 	scene.getRoot().addChild(new VVGL.SceneNode(axis));
 
     this.planetGenerator = new PlanetGenerator();
     this.planet = null;
+    this.grid = null;
 };
 
 OctoPlanet.prototype = Object.create(VVGL.Application.prototype);
@@ -31,14 +34,29 @@ OctoPlanet.prototype.manageData = function () {
 	VVGL.Application.prototype.manageData.call(this);
 };
 
+OctoPlanet.prototype.setGridVisibility = function (visibility) {
+    this.gridVisiblity = visibility;
+    if (this.grid !== null) {
+        this.grid.visible = visibility;
+    }
+};
+
 OctoPlanet.prototype.createPlanet = function (data) {
     if (this.planet !== null) {
         this.scene.getRoot().removeChild(this.planet);
+        this.scene.getRoot().removeChild(this.grid);
     }
 
     this.getRenderer().disableBackfaceCulling();
-    this.planet = this.planetGenerator.generate(data);
+
+    var data = this.planetGenerator.generate(data);
+    data.planet.setShader(this.shader);
+    data.grid.setShader(this.shader);
+    this.planet = new VVGL.SceneNode(data.planet);
+    this.grid = new VVGL.SceneNode(data.grid);
+    this.grid.scale(1.001);
+    this.grid.visible = this.gridVisiblity;
 
     this.scene.getRoot().addChild(this.planet);
-
+    this.scene.getRoot().addChild(this.grid);
 };

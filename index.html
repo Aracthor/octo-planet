@@ -12,12 +12,13 @@
         <script type="text/javascript" src="libvvgl/libvvgl.js" ></script>
 
         <!-- WebGL scripts -->
-        <script type="text/javascript" src="scripts/main.js" ></script>
-        <script type="text/javascript" src="scripts/Planet.js" ></script>
+        <script type="text/javascript" src="scripts/HeightCalculator.js" ></script>
         <script type="text/javascript" src="scripts/PlanetForm.js" ></script>
         <script type="text/javascript" src="scripts/PlanetGenerator.js" ></script>
         <script type="text/javascript" src="scripts/OctoPlanet.js" ></script>
+        <script type="text/javascript" src="scripts/VertexPainter.js" ></script>
         <script type="text/javascript" src="scripts/Triangle.js" ></script>
+        <script type="text/javascript" src="scripts/main.js" ></script>
 
         <!-- Forms scripts -->
     </head>
@@ -33,6 +34,9 @@
                     <br />
                     <label for="tessellation-level">Tessellation level:</label>
                     <input id="tessellation-level" type="text" value="5" />
+                    <br />
+                    <label for="display-grid">Display grid</label>
+                    <input id="display-grid" type="checkbox" onclick="PlanetForm.changeGridDisplay();"/>
                     <br />
                     <input type="submit" value="create" />
                 </fieldset>

@@ -1,6 +1,9 @@
 PlanetForm = function () {
     this.seed = document.getElementById("seed");
     this.tessellationInput = document.getElementById("tessellation-level");
+    this.gridDisplay = document.getElementById("display-grid");
+    
+    this.changeGridDisplay();
 };
 
 
@@ -10,8 +13,8 @@ PlanetForm.prototype.getPlanetData = function () {
     data.tessellationLevel = parseInt(this.tessellationInput.value);
     if (isNaN(data.seed)) {
         throw new VVGL.Exception("Invalid seed. I want a number !");
-    } else if (isNaN(data.tessellationLevel) || data.tessellationLevel < 1 || data.tessellationLevel > 8) {
-        throw new VVGL.Exception("Invalid tessellation level. I want a number between 1 and 8 !");
+    } else if (isNaN(data.tessellationLevel) || data.tessellationLevel < 1 || data.tessellationLevel > 7) {
+        throw new VVGL.Exception("Invalid tessellation level. I want a number between 1 and 7 !");
     }
 
     return data;
@@ -20,6 +23,11 @@ PlanetForm.prototype.getPlanetData = function () {
 
 PlanetForm.prototype.generateSeed = function () {
     this.seed.value = new Date().getTime();
+};
+
+PlanetForm.prototype.changeGridDisplay = function () {
+    var app = VVGL.Application.access();
+    app.setGridVisibility(this.gridDisplay.checked);
 };
 
 
@@ -35,6 +43,12 @@ PlanetForm.getInstance = function () {
 PlanetForm.generateSeed = function () {
     var planetForm = PlanetForm.getInstance();
     planetForm.generateSeed();
+    return false;
+};
+
+PlanetForm.changeGridDisplay = function () {
+    var planetForm = PlanetForm.getInstance();
+    planetForm.changeGridDisplay();
     return false;
 };
 

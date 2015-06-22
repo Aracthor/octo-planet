@@ -1,4 +1,6 @@
 PlanetGenerator = function () {
+    this.heightCalculator = new HeightCalculator();
+    this.vertexPainter = new VertexPainter();
     this.radius = 5.0;
 };
 
@@ -24,12 +26,17 @@ PlanetGenerator.prototype.getTrianglesList = function (tessellation) {
     for (var i in indices) {
         if (i % 3 === 0) {
             i = parseInt(i);
-            // TODO clear this dirty code.
+            var selectedIndices = [indices[i + 0], indices[i + 1], indices[i + 2]];
+            var coordPositions = [
+                selectedIndices[0] * 3, selectedIndices[0] * 3 + 1, selectedIndices[0] * 3 + 2,
+                selectedIndices[1] * 3, selectedIndices[1] * 3 + 1, selectedIndices[1] * 3 + 2,
+                selectedIndices[2] * 3, selectedIndices[2] * 3 + 1, selectedIndices[2] * 3 + 2
+            ];
             var coords = [
-                new VVGL.Vec3(isocaedreCoords[indices[i + 0] * 3], isocaedreCoords[indices[i + 0] * 3 + 1], isocaedreCoords[indices[i + 0] * 3 + 2]),
-                new VVGL.Vec3(isocaedreCoords[indices[i + 1] * 3], isocaedreCoords[indices[i + 1] * 3 + 1], isocaedreCoords[indices[i + 1] * 3 + 2]),
-                new VVGL.Vec3(isocaedreCoords[indices[i + 2] * 3], isocaedreCoords[indices[i + 2] * 3 + 1], isocaedreCoords[indices[i + 2] * 3 + 2])
-            ]
+                new VVGL.Vec3(isocaedreCoords[coordPositions[0]], isocaedreCoords[coordPositions[1]], isocaedreCoords[coordPositions[2]]),
+                new VVGL.Vec3(isocaedreCoords[coordPositions[3]], isocaedreCoords[coordPositions[4]], isocaedreCoords[coordPositions[5]]),
+                new VVGL.Vec3(isocaedreCoords[coordPositions[6]], isocaedreCoords[coordPositions[7]], isocaedreCoords[coordPositions[8]])
+            ];
             triangles.push(new Triangle(coords, tessellation));
         }
     }
@@ -37,30 +44,68 @@ PlanetGenerator.prototype.getTrianglesList = function (tessellation) {
     return triangles;
 };
 
-PlanetGenerator.prototype.generate = function (data) {
-    var planet = new Planet(this.radius);
-    var random = new VVGL.Random(parseInt(data.seed));
+PlanetGenerator.prototype.addPointToCoords = function (coords, point) {
+    coords.push(point.x * this.radius),
+    coords.push(point.y * this.radius),
+    coords.push(point.z * this.radius);
+};
 
-    planet.triangles = this.getTrianglesList(data.tessellationLevel);
+PlanetGenerator.prototype.calculateColor = function (point) {
+    var color = this.vertexPainter.paint(point);
+    this.colors.push(color.r);
+    this.colors.push(color.g);
+    this.colors.push(color.b);
+    this.colors.push(1.0);
+};
 
-    var coords = planet.getVerticesCoords();
+PlanetGenerator.prototype.addTriangleToGrid = function (triangle) {
+    this.addPointToCoords(this.gridCoords, triangle.coords[0]);
+    this.addPointToCoords(this.gridCoords, triangle.coords[1]);
+    this.addPointToCoords(this.gridCoords, triangle.coords[1]);
+    this.addPointToCoords(this.gridCoords, triangle.coords[2]);
+    this.addPointToCoords(this.gridCoords, triangle.coords[2]);
+    this.addPointToCoords(this.gridCoords, triangle.coords[0]);
+};
 
-    var colors = [];
-    var red, green, blue;
-    for (var i = 0; i < coords.length / 3; ++i) {
-        if (i % 3 === 0) {
-            red = random.randomFloat();
-            green = random.randomFloat();
-            blue = random.randomFloat();
+PlanetGenerator.prototype.calculateVerticesForTriangle = function (triangle) {
+    if (triangle.subTriangles.length > 0) {
+        for (var i in triangle.subTriangles) {
+            this.calculateVerticesForTriangle(triangle.subTriangles[i]);
         }
-        colors.push(red);
-        colors.push(green);
-        colors.push(blue);
-        colors.push(1.0);
+    } else {
+        for (var j in triangle.coords) {
+            var point = triangle.coords[j];
+            this.heightCalculator.calculate(point);
+            this.addPointToCoords(this.coords, point);
+            this.calculateColor(point);
+        }
+        this.addTriangleToGrid(triangle);
     }
 
-    planet.addPositions(coords);
-    planet.addColors(colors);
+};
 
-    return planet;
+PlanetGenerator.prototype.calculateVertices = function () {
+    for (var i in this.triangles) {
+        this.calculateVerticesForTriangle(this.triangles[i]);
+    }
+};
+
+PlanetGenerator.prototype.generate = function (data) {
+    var random = new VVGL.Random(parseInt(data.seed));
+    var planet = new VVGL.Mesh(VVGL.RenderMode.TRIANGLES);
+    var grid = new VVGL.Mesh(VVGL.RenderMode.LINES);
+
+    this.triangles = this.getTrianglesList(data.tessellationLevel);
+
+    this.heightCalculator.init(random);
+    this.coords = new Array(this.triangles.length * 3 * 3);
+    this.colors = new Array(this.triangles.length * 3 * 4);
+    this.gridCoords = new Array(this.triangles.length * 3 * 6);
+    this.calculateVertices();
+
+    planet.addPositions(this.coords);
+    planet.addColors(this.colors);
+    grid.addPositions(this.gridCoords);
+
+    return {planet: planet, grid: grid};
 };

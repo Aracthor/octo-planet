@@ -1,5 +1,7 @@
 Triangle = function (coords, tesselation) {
-    this.coords = this.cutCoords(coords, tesselation);
+    this.subTriangles = [];
+    this.coords = [];
+    this.cutCoords(coords, tesselation);
 };
 
 Triangle.prototype.cutCoords = function (coords, tesselation) {
@@ -8,26 +10,13 @@ Triangle.prototype.cutCoords = function (coords, tesselation) {
         var coord02 = VVGL.Vec3.center(coords[0], coords[2]);
         var coord12 = VVGL.Vec3.center(coords[1], coords[2]);
 
-        var coords = this.cutCoords([coords[0], coord01, coord02], tesselation - 1)
-            .concat(this.cutCoords([coords[1], coord01, coord12], tesselation - 1))
-            .concat(this.cutCoords([coords[2], coord02, coord12], tesselation - 1))
-            .concat(this.cutCoords([coord01, coord02, coord12], tesselation - 1));
+        this.subTriangles = [
+            new Triangle([coords[0], coord01, coord02], tesselation - 1),
+            new Triangle([coords[1], coord01, coord12], tesselation - 1),
+            new Triangle([coords[2], coord02, coord12], tesselation - 1),
+            new Triangle([coord01, coord02, coord12], tesselation - 1)
+        ];
+    } else {
+        this.coords = coords;
     }
-
-    return (coords);
-};
-
-Triangle.prototype.extractVerticesCoords = function (radius) {
-    this.verticesCoords = [];
-
-    for (var i in this.coords) {
-        var vector = this.coords[i];
-        vector.normalize();
-        vector.scale(radius);
-        this.verticesCoords.push(vector.x);
-        this.verticesCoords.push(vector.y);
-        this.verticesCoords.push(vector.z);
-    }
-
-    return (this.verticesCoords);
 };
