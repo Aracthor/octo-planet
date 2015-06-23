@@ -9,7 +9,8 @@ OctoPlanet = function (canvasId) {
     this.shader = shader;
 	
 	var camera = new VVGL.TrackballCamera();
-    scene.getRoot().addChild(new VVGL.SceneNode(camera));
+    this.cameraNode = new VVGL.SceneNode(camera);
+    scene.getRoot().addChild(this.cameraNode);
     scene.setActiveCamera(camera);
 	
 	var alight = new VVGL.AmbianceLight("aLight");
@@ -39,6 +40,22 @@ OctoPlanet.prototype.setGridVisibility = function (visibility) {
     if (this.grid !== null) {
         this.grid.visible = visibility;
     }
+};
+
+OctoPlanet.prototype.changeCamera = function (type) {
+    var oldCamera = this.cameraNode.data;
+    var newCamera;
+
+    if (type == "trackball") {
+        newCamera = VVGL.TrackballCamera.copy(oldCamera);
+        newCamera.target.set(0, 0, 0);
+        newCamera.fixDistanceToCurrent();
+    } else if (type == "freefly") {
+        newCamera = VVGL.FreeFlyCamera.copy(oldCamera);
+    }
+
+    this.scene.setActiveCamera(newCamera);
+    this.cameraNode.data = newCamera;
 };
 
 OctoPlanet.prototype.createPlanet = function (data) {

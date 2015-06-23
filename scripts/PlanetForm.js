@@ -2,6 +2,7 @@ PlanetForm = function () {
     this.seed = document.getElementById("seed");
     this.tessellationInput = document.getElementById("tessellation-level");
     this.gridDisplay = document.getElementById("display-grid");
+    this.cameraType = document.getElementById("camera-type");
     
     this.changeGridDisplay();
 };
@@ -30,6 +31,12 @@ PlanetForm.prototype.changeGridDisplay = function () {
     app.setGridVisibility(this.gridDisplay.checked);
 };
 
+PlanetForm.prototype.changeCamera = function () {
+    var type = this.cameraType.options[this.cameraType.selectedIndex].value;
+
+    VVGL.Application.access().changeCamera(type);
+};
+
 
 PlanetForm.instance = null;
 
@@ -49,7 +56,11 @@ PlanetForm.generateSeed = function () {
 PlanetForm.changeGridDisplay = function () {
     var planetForm = PlanetForm.getInstance();
     planetForm.changeGridDisplay();
-    return false;
+};
+
+PlanetForm.changeCamera = function () {
+    var planetForm = PlanetForm.getInstance();
+    planetForm.changeCamera();
 };
 
 PlanetForm.submit = function () {
