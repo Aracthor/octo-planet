@@ -9,7 +9,7 @@
 
 
         <!-- Lib WebGL -->
-        <script type="text/javascript" src="scripts/libvvgl.js" ></script>
+        <script type="text/javascript" src="scripts/libvvgl3D.js" ></script>
 
         <!-- WebGL scripts -->
         <script type="text/javascript" src="scripts/HeightCalculator.js" ></script>
@@ -30,24 +30,28 @@
                 <fieldset id="planet" style="width: 800px; text-align: left;">
                     <legend>Planet creation</legend>
                     <label for="seed">Seed:</label>
-                    <input id="seed" type="text" />
+                    <input id="seed" type="number" />
                     <button onclick="return PlanetForm.generateSeed();">Generate seed</button>
                     <br />
 
                     <label for="tessellation-level">Tessellation level:</label>
-                    <input id="tessellation-level" type="text" value="5" />
+                    <input id="tessellation-level" type="number" value="5" />
                     <br />
 
                     <label for="display-grid">Display grid</label>
                     <input id="display-grid" type="checkbox" onclick="PlanetForm.changeGridDisplay();"/>
                     <br />
-
-                    <label for="camera-type">Camera type</label>
-                    <select id="camera-type" onchange="PlanetForm.changeCamera();">
-                        <option value="trackball" selected="selected">Trackball</option>
-                        <option value="freefly">Freefly</option>
-                    </select>
                     <br />
+
+                    <fieldset id="camera" style="width: 780px; text-align: left;">
+                        <legend>Camera</legend>
+
+                        <label for="camera-type">Type</label>
+                        <select id="camera-type" onchange="PlanetForm.changeCamera();">
+                            <option value="trackball" selected="selected">Trackball</option>
+                            <option value="freefly">Freefly</option>
+                        </select>
+                    </fieldset>
 
                     <input type="submit" value="create" />
                 </fieldset>

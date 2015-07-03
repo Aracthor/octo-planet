@@ -84,65 +84,6 @@ VVGL.MouseButton = {
 	MAX: 	3
 };
 /**
- * Enum for render modes of {@link VVGL.Mesh}
- * 
- * @readonly
- * @enum {number}
- */
-VVGL.RenderMode = {
-	POINTS: 0,
-	LINES: 1,
-	LINES_STRIP: 2,
-	LINES_FAN: 3,
-	TRIANGLES: 4,
-	TRIANGLES_STRIP: 5,
-	TRIANGLES_FAN: 6
-};
-/**
- * Something that you can select or unselect.
- * 
- * @interface
- */
-VVGL.IBindable = function () {};
-
-VVGL.IBindable.prototype.bind = function () {
-	throw new VVGL.ImplementationException(this, "bind", "IBindable");
-};
-
-VVGL.IBindable.prototype.unbind = function () {
-	throw new VVGL.ImplementationException(this, "unbind", "IBindable");
-};
-/**
- * Renderable data linkable to {@link VVGL.SceneNode}
- * 
- * @abstract
- * @class
- * @classdesc Renderable data.
- * @param {string} type
- * @todo pass to another folder.
- */
-VVGL.SceneData = function (type) {
-	this.type = type;
-};
-
-/**
- * Return data type name.
- * 
- * @return {string} Data type.
- */
-VVGL.SceneData.prototype.getType = function () {
-	return (this.type);
-};
-
-/**
- * Update node data.
- * 
- * @param {number} elapsedTime Elapsed miliseconds from last frame.
- */
-VVGL.SceneData.prototype.update = function (elapsedTime) {
-	throw new VVGL.ImplementationException(this, "update", "SceneData");
-};
-/**
  * Create event manager for canvas.
  * 
  * @private
@@ -708,20 +649,21 @@ VVGL.WheelMovementListener.prototype.onEvent = function (data, x, y, deltaX, del
 /**
  * Super singleton manager of canvas, graphic and physic engine.
  * This class has to be instanciate only once in your program.
- * You can then access your instance with {@link VVGL.Application.instance}
+ * You can then access your instance with {@link VVGL.Application.access}
  * 
  * @class
- * @extends VVGL.EventsHandler
  * @classdesc Super singleton manager of canvas, graphic and physic engine.
+ * @extends VVGL.EventsHandler
  * @param {string} canvasId Id of your HTML canvas.
  */
 VVGL.Application = function (canvasId) {
 	VVGL.Application.instance = this;
 	this.canvas = document.getElementById(canvasId);
-	
-	this.initAPI();
-	this.initContext();
-	this.renderer = new VVGL.Renderer();
+
+    this.width = this.canvas.width;
+    this.height = this.canvas.height;
+
+    this.initAPI();
 };
 
 VVGL.Application.prototype = Object.create(VVGL.EventsHandler.prototype);
@@ -739,21 +681,16 @@ VVGL.Application.prototype.initAPI = function () {
 };
 
 /**
- * Initialize Context
- * 
- * @private
+ * Resize canvas resolution to specific width and height.
+ *
+ * @param {number} width
+ * @param {number} height
  */
-VVGL.Application.prototype.initContext = function () {
-	try {
-		this.context = this.canvas.getContext("experimental-webgl");
-	} catch (exception) {
-		throw new VVGL.Exception("Cannot initalize WebGL. Sorry for that.");
-	}
-	
-	this.context.viewportWidth = this.canvas.width;
-	this.context.viewportHeight = this.canvas.height;
-	this.context.viewport(0, 0, this.canvas.width, this.canvas.height);
-	gl = this.context;
+VVGL.Application.prototype.resize = function (width, height) {
+    this.width = width;
+    this.height = height;
+    this.canvas.width = width;
+    this.canvas.height = height;
 };
 
 /**
@@ -807,16 +744,6 @@ VVGL.Application.prototype.manageEvents = function () {
 VVGL.Application.prototype.getSceneManager = function () {
 	return (this.sceneManager);
 };
-
-/**
- * Get application WebGL renderer.
- *
- * @return {VVGL.Renderer} Application renderer.
- */
-VVGL.Application.prototype.getRenderer = function () {
-    return (this.renderer);
-};
-
 /**
  * Lock mouse pointer once user will have clicked.
  */
@@ -887,17 +814,6 @@ VVGL.Application.loop = function () {
 };
 
 /**
- * Return first param, or defaultValue if param is undefined.
- * 
- * @param {Object} param undefined or not to check.
- * @param {Object} defaultValue Value to return if param is undefined.
- * @returns {Object} param if not undefined, else defaultValue.
- */
-VVGL.setIfUndefined = function (param, defaultValue) {
-	return (param !== undefined ? param : defaultValue);
-};
-
-/**
  * Allow multi-inheritance.
  * Return a prototype that concatenate both arguments.
  * 
@@ -927,506 +843,6 @@ VVGL.fusionClasses = function (prototype1, prototype2) {
 	return (fusion);
 };
 /**
- * @class
- * @classdesc Base camera class.
- * @extends VVGL.EventsHandler
- * @extends VVGL.SceneData
- */
-VVGL.Camera = function () {
-	VVGL.SceneData.call(this, "camera");
-	VVGL.EventsHandler.call(this);
-
-	this.perspective = new VVGL.Mat4();
-	this.view = new VVGL.Mat4();
-	
-	this.position = new VVGL.Vec3(-10, 0, 0);
-	this.target = new VVGL.Vec3(0, 0, 0);
-	this.up = new VVGL.Vec3(0, 0, 1);
-	
-	this.elapsedTime = 0;
-};
-
-VVGL.Camera.prototype = VVGL.fusionClasses(VVGL.SceneData.prototype, VVGL.EventsHandler.prototype);
-
-/**
- * Eye position.
- * 
- * @type {VVGL.Vec3}
- */
-VVGL.Camera.prototype.position = null;
-
-/**
- * Eye point looked.
- * 
- * @type {VVGL.Vec3}
- */
-VVGL.Camera.prototype.target = null;
-
-/**
- * Up vector.
- * Define scene axis.
- * 
- * @type {VVGL.Vec3}
- */
-VVGL.Camera.prototype.up = null;
-
-/**
- * Camera angle, in degrees.
- * 
- * @type {number}
- * @default
- */
-VVGL.Camera.prototype.angle = 60.0;
-
-/**
- * Camera aspect ratio.
- * Typically canvas width / canvas height.
- * 
- * @type {number}
- * @default
- */
-VVGL.Camera.prototype.aspectRatio = 4.0 / 3.0;
-
-/**
- * Camera minimum display range.
- * 
- * @type {number}
- * @default
- */
-VVGL.Camera.prototype.minRange = 0.1;
-
-/**
- * Camera maximum display range.
- * 
- * @type {number}
- * @default
- */
-VVGL.Camera.prototype.maxRange = 100.0;
-
-
-/**
- * Return persepctive matrix.
- * 
- * @return {VVGL.Mat4}
- */
-VVGL.Camera.prototype.getPerspective = function () {
-	this.perspective.perspective(this.angle, this.aspectRatio, this.minRange, this.maxRange);
-	return (this.perspective);
-};
-
-/**
- * Return view matrix.
- * 
- * @return {VVGL.Mat4}
- */
-VVGL.Camera.prototype.getView = function () {
-	this.view.lookAt(this.position, this.target, this.up);
-	return (this.view);
-};
-
-/**
- * Copy camera parameters to another one.
- *
- * @param {VVGL.Camera} copy
- */
-VVGL.Camera.prototype.copyTo = function (copy) {
-    copy.position = this.position.clone();
-    copy.target = this.target.clone();
-    copy.up = this.up.clone();
-
-    copy.angle = this.angle;
-    copy.aspectRatio = this.aspectRatio;
-    copy.minRange = this.minRange;
-    copy.maxRange = this.maxRange;
-};
-/**
- * @class
- * @classdesc Camera free to move everywhere, moving with keyboard, turning with mouse.
- * @extends VVGL.Camera
- */
-VVGL.FreeFlyCamera = function () {
-	VVGL.Camera.call(this);
-
-	this.forward = new VVGL.Vec3();
-	this.left = new VVGL.Vec3();
-	this.move = new VVGL.Vec3();
-
-	this.angleX = 0;
-	this.angleY = 0;
-	
-	this.recalcVectors();
-
-	this.addKeyListener(VVGL.KeyCode.W, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceFront));
-	this.addKeyListener(VVGL.KeyCode.S, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceBack));
-	this.addKeyListener(VVGL.KeyCode.D, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceRight));
-	this.addKeyListener(VVGL.KeyCode.A, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceLeft));
-	
-	this.addMouseMovementListener(new VVGL.MouseMovementListener(VVGL.FreeFlyCamera.turnCamera));
-};
-
-VVGL.FreeFlyCamera.prototype = Object.create(VVGL.Camera.prototype);
-
-/**
- * Coefficient between 1 and 0 proportional to movement inertia.
- * 
- * @type {number}
- * @default
- */
-VVGL.FreeFlyCamera.prototype.inertiaCoef = 0.95;
-
-/**
- * Movements speed.
- * 
- * @type {number}
- * @default
- */
-VVGL.FreeFlyCamera.prototype.speed = 0.01;
-
-/**
- * Rotation speed.
- * 
- * @type {number}
- * @default
- */
-VVGL.FreeFlyCamera.prototype.sensitivity = 0.005;
-
-
-/**
- * Recalc forward and left vectors.
- * 
- * @private
- * @todo Use math helper to trigonometry.
- */
-VVGL.FreeFlyCamera.prototype.recalcVectors = function () {
-	this.forward.x = Math.cos(this.angleY) * Math.cos(this.angleX);
-	this.forward.y = Math.cos(this.angleY) * Math.sin(this.angleX);
-	this.forward.z = Math.sin(this.angleY);
-	
-	this.forward.copyTo(this.left);
-	this.left.crossProduct(this.up);
-	this.left.normalize();
-	
-	this.position.copyTo(this.target);
-	this.target.sub(this.forward);
-};
-
-/**
- * Update camera data.
- * Move position if camera was moving,
- * update movement with inertia,
- * and recalc other vectors.
- * 
- * @override
- * @param {number} elapsedTime
- */
-VVGL.FreeFlyCamera.prototype.update = function (elapsedTime) {
-	var movementScale = this.speed * elapsedTime;
-
-    this.position.x += this.move.x * movementScale;
-    this.position.y += this.move.y * movementScale;
-    this.position.z += this.move.z * movementScale;
-
-	this.move.scale(this.inertiaCoef);
-	
-	this.recalcVectors();
-};
-
-
-/**
- * Advance to front event listener.
- * 
- * @private
- * @static
- * @param {VVGL.FreeFlyCamera} camera
- */
-VVGL.FreeFlyCamera.advanceFront = function (camera) {
-	camera.move.sub(camera.forward);
-};
-
-/**
- * Advance to back event listener.
- * 
- * @private
- * @static
- * @param {VVGL.FreeFlyCamera} camera
- */
-VVGL.FreeFlyCamera.advanceBack = function (camera) {
-	camera.move.add(camera.forward);
-};
-
-/**
- * Advance to right event listener.
- * 
- * @private
- * @static
- * @param {VVGL.FreeFlyCamera} camera
- */
-VVGL.FreeFlyCamera.advanceRight = function (camera) {
-	camera.move.sub(camera.left);
-};
-
-/**
- * Advance to left event listener.
- * 
- * @private
- * @static
- * @param {VVGL.FreeFlyCamera} camera
- */
-VVGL.FreeFlyCamera.advanceLeft = function (camera) {
-	camera.move.add(camera.left);
-};
-
-/**
- * Copy camera parameters to another one.
- *
- * @override
- * @param {VVGL.Camera} copy
- */
-VVGL.FreeFlyCamera.prototype.copyTo = function (copy) {
-    VVGL.Camera.prototype.copyTo.call(this, copy);
-
-    copy.angleX = this.angleX;
-    copy.angleY = this.angleY;
-};
-
-/**
- * Turn camera mouse movement listener.
- * 
- * @private
- * @static
- * @param {VVGL.FreeFlyCamera} camera
- * @param {number} x
- * @param {number} y
- */
-VVGL.FreeFlyCamera.turnCamera = function (camera, x, y) {
-	if (VVGL.Mouse.isLocked || VVGL.Mouse.buttonIsPressed(VVGL.MouseButton.LEFT)) {
-		var yMax = VVGL.Maths.PI / 2 - 0.01;
-		
-		camera.angleX += x * camera.sensitivity;
-		camera.angleY -= y * camera.sensitivity;
-		if (camera.angleY > yMax) {
-			camera.angleY = yMax;
-		} else if (camera.angleY < -yMax) {
-			camera.angleY = -yMax;
-		}
-	}
-};
-
-/**
- * Create a new freefly camera with position, target and parameters from another.
- *
- * @static
- * @param {VVGL.Camera} camera Reference camera
- * @return {VVGL.FreeFlyCamera}
- */
-VVGL.FreeFlyCamera.copy = function (camera) {
-    var copy = new VVGL.FreeFlyCamera();
-
-    camera.copyTo(copy);
-    copy.recalcVectors();
-
-    return (copy);
-};
-/**
- * @class
- * @classdesc Camera with target fixed to a point, with position turning around with mouse movements.
- * @extends VVGL.Camera
- */
-VVGL.TrackballCamera = function () {
-	VVGL.Camera.call(this);
-
-    this.move = new VVGL.Vec2();
-
-    this.addMouseButtonPressListener(VVGL.MouseButton.LEFT, new VVGL.MouseButtonEventListener(VVGL.TrackballCamera.stop));
-    this.addMouseMovementListener(new VVGL.MouseMovementListener(VVGL.TrackballCamera.turn));
-    this.addWheelMovementListener(new VVGL.WheelMovementListener(VVGL.TrackballCamera.zoom));
-
-    this.recalcVectors();
-};
-
-VVGL.TrackballCamera.prototype = Object.create(VVGL.Camera.prototype);
-
-/**
- * Distance between center and position.
- * Or radius of camera's sphere.
- *
- * @type {number}
- * @default
- */
-VVGL.TrackballCamera.prototype.distance = 10;
-
-/**
- * Horizontal and vertical rotation speeds.
- *
- * @type {number}
- * @default
- */
-VVGL.TrackballCamera.prototype.rotationSpeed = 0.0001;
-
-/**
- * Zoom speed.
- *
- * @type {number}
- * @default
- */
-VVGL.TrackballCamera.prototype.zoomSpeed = 0.1;
-
-/**
- * Coefficient between 1 and 0 proportional to movement inertia.
- *
- * @type {number}
- * @default
- */
-VVGL.TrackballCamera.prototype.inertiaCoef = 0.95;
-
-/**
- * Horizontal angle.
- * Defined in radians.
- *
- * @type {number}
- * @default
- */
-VVGL.TrackballCamera.prototype.angleX = 0;
-
-/**
- * Vertical angle.
- * Defined in radians.
- *
- * @type {number}
- * @default
- */
-VVGL.TrackballCamera.prototype.angleY = 0;
-
-/**
- * Recalc camera position from target and angles.
- *
- * @private
- * @todo Use math helper to trigonometry.
- */
-VVGL.TrackballCamera.prototype.recalcVectors = function () {
-    this.position.x = Math.cos(this.angleY) * Math.cos(this.angleX);
-    this.position.y = Math.cos(this.angleY) * Math.sin(this.angleX);
-    this.position.z = Math.sin(this.angleY);
-    this.position.scale(this.distance);
-    this.position.add(this.target);
-
-    this.move.scale(this.inertiaCoef);
-};
-
-/**
- * Update camera data.
- * Move position if camera was turning,
- * update movement with inertia,
- * and recalculate other vectors.
- *
- * @override
- * @param {number} elapsedTime
- */
-VVGL.TrackballCamera.prototype.update = function (elapsedTime) {
-    var yMax = VVGL.Maths.PI / 2 - 0.01;
-    this.angleX += this.move.x * elapsedTime;
-    this.angleY += this.move.y * elapsedTime;
-
-    if (this.angleY > yMax) {
-        this.angleY = yMax;
-    } else if (this.angleY < -yMax) {
-        this.angleY = -yMax;
-    }
-
-    this.recalcVectors();
-};
-
-/**
- * Copy camera parameters to another one.
- *
- * @override
- * @param {VVGL.Camera} copy
- */
-VVGL.TrackballCamera.prototype.copyTo = function (copy) {
-    VVGL.Camera.prototype.copyTo.call(this, copy);
-
-    copy.angleX = this.angleX;
-    copy.angleY = this.angleY;
-};
-
-/**
- * Set camera zoom distance to current distance between position and target.
- */
-VVGL.TrackballCamera.prototype.fixDistanceToCurrent = function () {
-    this.distance = VVGL.Vec3.distance(this.position, this.target);
-};
-
-
-/**
- * Turn camera mouse movement listener.
- *
- * @private
- * @static
- * @param {VVGL.TrackballCamera} camera
- * @param {number} x
- * @param {number} y
- */
-VVGL.TrackballCamera.turn = function (camera, x, y) {
-    if (VVGL.Mouse.isLocked || VVGL.Mouse.buttonIsPressed(VVGL.MouseButton.LEFT)) {
-        camera.move.x += x * camera.rotationSpeed;
-        camera.move.y -= y * camera.rotationSpeed;
-    }
-};
-
-/**
- * Stop camera mouse pressure listener.
- *
- * @private
- * @static
- * @param {VVGL.TrackballCamera} camera
- * @param {number} x X mouse position
- * @param {number} y Y mouse position
- */
-VVGL.TrackballCamera.stop = function (camera, x, y) {
-    camera.move.x = 0;
-    camera.move.y = 0;
-};
-
-/**
- * Zoom camera wheel movement listener.
- *
- * @private
- * @static
- * @param {VVGL.TrackballCamera} camera
- * @param {number} x X mouse position
- * @param {number} y Y mouse position
- * @param {number} deltaX Horizontal scroll
- * @param {number} deltaY Vertical scroll
- * @param {number} deltaZ No idea
- */
-VVGL.TrackballCamera.zoom = function (camera, x, y, deltaX, deltaY, deltaZ) {
-    while (deltaY > 0) {
-        camera.distance += camera.distance * camera.zoomSpeed;
-        --deltaY;
-    }
-    while (deltaY < 0) {
-        camera.distance -= camera.distance * camera.zoomSpeed;
-        ++deltaY;
-    }
-};
-
-/**
- * Create a new trackball camera with position, target and parameters from another.
- *
- * @static
- * @param {VVGL.Camera} camera Reference camera
- * @return {VVGL.TrackballCamera}
- */
-VVGL.TrackballCamera.copy = function (camera) {
-    var copy = new VVGL.TrackballCamera();
-
-    camera.copyTo(copy);
-    copy.fixDistanceToCurrent();
-    copy.recalcVectors();
-
-    return (copy);
-};
-/**
  * Create color from arguments, or black color if none.
  *
  * @class
@@ -1437,10 +853,10 @@ VVGL.TrackballCamera.copy = function (camera) {
  * @param {number} [a=1] Alpha value (between 0 and 1)
  */
 VVGL.Color = function (r, g, b, a) {
-    this.r = VVGL.setIfUndefined(r, 0.0);
-    this.g = VVGL.setIfUndefined(g, 0.0);
-    this.b = VVGL.setIfUndefined(b, 0.0);
-    this.a = VVGL.setIfUndefined(a, 1.0);
+    this.r = r ? r : 0.0;
+    this.g = g ? g : 0.0;
+    this.b = b ? b : 0.0;
+    this.a = a !== undefined ? a : 1.0;
 };
 
 /**
@@ -1493,7 +909,7 @@ VVGL.Color.prototype.setFromInteger = function (number) {
  * @param {number} a Alpha value.
  */
 VVGL.Color.prototype.setFromIntNumbers = function (r, g, b, a) {
-	a = VVGL.setIfUndefined(a, 0xFF);
+	a = a !== undefined ? a : 0xFF;
 	this.setFromInteger((r << 24) + (g << 16) + (b << 8) + a);
 };
 
@@ -1507,7 +923,7 @@ VVGL.Color.prototype.setFromIntNumbers = function (r, g, b, a) {
  * @param {number} a Alpha value.
  */
 VVGL.Color.prototype.setFromFloatNumbers = function (r, g, b, a) {
-	a = VVGL.setIfUndefined(a, 1.0);
+	a = a !== undefined ? a : 1.0;
 	this.r = r;
 	this.g = g;
 	this.b = b;
@@ -1591,101 +1007,59 @@ VVGL.Color.cyan = new VVGL.Color(0, 1, 1);
  * @const
  */
 VVGL.Color.white = new VVGL.Color(1, 1, 1);
+
 /**
- * Exception base for all exception classes.
- * Every exception contains at least a message and sometimes more, depending of the type.
- * @class Exception base for all exception classes.
- * @constructor
- * @param {Object} message
+ * Convert color to hexa string format.
+ *
+ * @return {string}
  */
-VVGL.Exception = function (message) {
+VVGL.Color.prototype.toString = function () {
+    var colors = [this.r, this.g, this.b];
+    var string = "#";
+
+    for (var i in colors) {
+        var color = colors[i] * 0x100;
+        var elem = color.toString(16);
+        if (elem.length === 1) {
+            elem = "0" + elem;
+        }
+        string += elem;
+    }
+
+    return (string);
+};
+/**
+ * Create an exception with associated message.
+ * The second argument should not be used, except from another exception constructor.
+ *
+ * @class
+ * @classdesc Exception base for all exception classes.
+ * @param {string} message
+ * @param {string} [name="Error"]
+ */
+VVGL.Exception = function (message, name) {
+	Error.prototype.call(this);
+	this.name = name ? name : "Error"
 	this.message = message;
 };
 
-/**
- * @type {string} message Error message.
- */
-VVGL.Exception.prototype.message = "";
+VVGL.Exception.prototype = Object.create(Error.prototype);
 
 /**
- * @type {string} type Exception type.
+ * Exception custom message.
+ *
+ * @type {string}
  */
-VVGL.Exception.prototype.type = "none";
+VVGL.Exception.prototype.message = "";
 
 /**
  * Convert Exception to a {string}.
  * 
  * @return {string} Exception details.
  */
-VVGL.Exception.prototype.what = function () {
-	return (this.message);
+VVGL.Exception.prototype.toString = function () {
+	return (this.name + ": " + this.message);
 };
-/**
- * @class
- * @classdesc Handle interns OpenGL errors.
- * @extends VVGL.Exception
- * @private
- */
-VVGL.GLErrorException = function (func, error) {
-	var message = "OpenGL error after " + func + ": " + this.interpreteError(error);
-	VVGL.Exception.call(this, message);
-};
-
-VVGL.GLErrorException.prototype = Object.create(VVGL.Exception.prototype);
-
-/**
- * Get appropriate error message from error enum.
- * 
- * @private
- * @param {number} error GLenum error id.
- */
-VVGL.GLErrorException.prototype.interpreteError = function (error) {
-	var errors = [];
-	errors[gl.INVALID_ENUM]						= "Invalid enum";
-	errors[gl.INVALID_VALUE]					= "Invalid value";
-	errors[gl.INVALID_OPERATION]				= "Invalid operation";
-	errors[gl.INVALID_FRAMEBUFFER_OPERATION]	= "Invalid framebuffer operation";
-	errors[gl.OUT_OF_MEMORY]					= "Out of memory";
-	errors[gl.STACK_UNDERFLOW]					= "Stack underflow";
-	errors[gl.STACK_OVERFLOW]					= "Stack overflow";
-	
-	return (errors[error]);
-};
-
-
-/**
- * Check if something bad happened.
- * If yes, throw an exception with corresponding error message.
- * 
- * @static
- * @throws {VVGL.GLErrorException}
- */
-VVGL.GLErrorException.checkError = function (func) {
-	var error = gl.getError();
-	if (error !== gl.NO_ERROR) {
-		throw new VVGL.GLErrorException(func, error);
-	}
-};
-/**
- * @class
- * @classdesc Exception throwed on ressource initialisation fail.
- * @extends VVGL.Exception
- * @param {Object} object Ressource linked to problem.
- * @param {string} message Problem resume.
- */
-VVGL.GLRessourceException = function (ressource, message) {
-	VVGL.Exception.call(this, message);
-	this.ressource = ressource;
-};
-
-VVGL.GLRessourceException.prototype = Object.create(VVGL.Exception.prototype);
-
-/**
- * Ressource linked to problem.
- * 
- * @type {Object}
- */
-VVGL.GLRessourceException.prototype.ressource = null;
 /**
  * Exception throwed on abstract function use.
  * 
@@ -1696,9 +1070,8 @@ VVGL.GLRessourceException.prototype.ressource = null;
  * @param {string} className Name of the abstract class.
  */
 VVGL.ImplementationException = function (linkedObject, functionName, className) {
-	VVGL.Exception.call(this, "Missing implementation of " + functionName + " in object " + className + ".");
+	VVGL.Exception.call(this, "Missing implementation of " + functionName + " in object " + className + ".", "MissingImplementationError");
 	this.linkedObject = linkedObject;
-	this.type = "implementation";
 };
 
 VVGL.ImplementationException.prototype = Object.create(VVGL.Exception.prototype);
@@ -1707,148 +1080,12 @@ VVGL.ImplementationException.prototype = Object.create(VVGL.Exception.prototype)
  * Print error message.
  * 
  * @override
+ * @return {string} Error message
  */
-VVGL.ImplementationException.prototype.what = function () {
+VVGL.ImplementationException.prototype.toString = function () {
 	console.log("Missing implementation object:");
 	console.log(this.linkedObject);
 	return (VVGL.Exception.prototype.what.call(this));
-};
-/**
- * @class
- * @extends VVGL.SceneData
- * @classdesc Abstract base class for all lights.
- * @param {string} name Uniform name in shader.
- */
-VVGL.Light = function (name) {
-	VVGL.SceneData.call(this, "light");
-	this.name = name;
-	this.color = VVGL.Color.white.clone();
-};
-
-VVGL.Light.prototype = Object.create(VVGL.SceneData.prototype);
-
-/**
- * @type {VVGL.Color}
- * @default
- */
-VVGL.Light.prototype.color = VVGL.Color.white;
-
-/**
- * Send light data to shader.
- * 
- * @abstract
- * @param {VVGL.ShaderProgram} shader
- */
-VVGL.Light.prototype.sendToShader = function (shader) {
-	throw VVGL.ImplementationException(this, "sendToShader", "Light");
-};
-/**
- * @class
- * @classdesc Minimum light level for all vertices.
- * @extends VVGL.Light
- * @param {string} name Uniform name in shader.
- */
-VVGL.AmbianceLight = function (name) {
-	VVGL.Light.call(this, name);
-};
-
-VVGL.AmbianceLight.prototype = Object.create(VVGL.Light.prototype);
-
-/**
- * Send data to shader.
- * 
- * @override
- * @param {VVGL.ShaderProgram} shader
- */
-VVGL.AmbianceLight.prototype.sendToShader = function (shader) {
-	shader.setColorUniform(this.name + ".color", this.color);
-};
-
-/**
- * Do nothing for ambiance light.
- * 
- * @param {number} elapsedTime Elapsed miliseconds from last frame.
- */
-VVGL.AmbianceLight.prototype.update = function (elapsedTime) {};
-/**
- * @class
- * @classdesc Light from a specific Direction.
- * @extends VVGL.Light
- * @param {string} name Uniform name in shader.
- */
-VVGL.DirectionLight = function (name) {
-	VVGL.Light.call(this, name);
-	this.direction = new VVGL.Vec3();
-};
-
-VVGL.DirectionLight.prototype = Object.create(VVGL.Light.prototype);
-
-/**
- * @type {VVGL.Vec3}
- */
-VVGL.DirectionLight.prototype.direction = null;
-
-/**
- * Send data to shader.
- * 
- * @override
- * @param {VVGL.ShaderProgram} shader
- */
-VVGL.DirectionLight.prototype.sendToShader = function (shader) {
-	shader.setColorUniform(this.name + ".color", this.color);
-	shader.setVector3Uniform(this.name + ".direction", this.direction);
-};
-
-/**
- * Do nothing for direction light.
- * 
- * @todo maybe update direction ?
- * @param {number} elapsedTime Elapsed miliseconds from last frame.
- */
-VVGL.DirectionLight.prototype.update = function (elapsedTime) {};
-/**
- * @class
- * @classdesc Light from a specific spot.
- * @extends VVGL.Light
- * @param {string} name Uniform name in shader.
- */
-VVGL.SpotLight = function (name) {
-	VVGL.Light.call(this, name);
-	this.position = new VVGL.Vec3();
-};
-
-VVGL.SpotLight.prototype = Object.create(VVGL.Light.prototype);
-
-/**
- * @type {VVGL.Vec3}
- */
-VVGL.SpotLight.prototype.position = null;
-
-/**
- * @type {VVGL.Vec4}
- * @default
- */
-VVGL.SpotLight.prototype.power = 1.0;
-
-/**
- * Send data to shader.
- * 
- * @override
- * @param {VVGL.ShaderProgram} shader
- */
-VVGL.SpotLight.prototype.sendToShader = function (shader) {
-	shader.setFloatUniform(this.name + ".power", this.power);
-	shader.setColorUniform(this.name + ".color", this.color);
-	shader.setVector3Uniform(this.name + ".position", this.position);
-};
-
-/**
- * Update light position from model matrix.
- * 
- * @todo update position
- * @param {number} elapsedTime Elapsed miliseconds from last frame.
- */
-VVGL.SpotLight.prototype.update = function (elapsedTime) {
 };
 /**
  * Created as an identity matrix.
@@ -2932,6 +2169,934 @@ VVGL.Vec4.prototype.toArray = function () {
 };
 
 /**
+ * @class
+ * @classdesc Manager of scenes selection.
+ * @private
+ */
+VVGL.SceneManager = function () {
+	this.scenes = [];
+	this.currentScene = null;
+};
+
+/**
+ * Add a new scene to list.
+ * 
+ * @param {string} scene Scene name.
+ * @param {VVGL.Scene} scene New scene to add to list.
+ * @param {Boolean} select The new scene is now the current one if this param is true. Set to false if undefined.
+ */
+VVGL.SceneManager.prototype.addScene = function(name, scene, select) {
+    select = select ? select : false;
+
+	this.scenes[name] = scene;
+	if (select) {
+		this.currentScene = scene;
+	}
+};
+
+/**
+ * Return last selectioned scene, or null if no scene is selectioned.
+ * 
+ * @return {VVGL.Scene} Last selectioned scene, or null if no scene is selectioned.
+ */
+VVGL.SceneManager.prototype.getCurrentScene = function () {
+	return (this.currentScene);
+};
+/**
+ * Create texture from image file.
+ *
+ * @class
+ * @classdesc Graphic 2D texture.
+ * @todo Texture manager.
+ * @param {string} source
+ */
+VVGL.Texture = function (source, loadCallback) {
+	var me = this;
+
+	this.ready = false;
+	this.source = source;
+	this.image = new Image();
+    this.image.onload = function () { me.onLoad();};
+    this.image.onerror = function () { me.onError();};
+	this.image.src = source;
+};
+
+/**
+ * Check if texture is ready to be used or not.
+ *
+ * @return {boolean}
+ */
+VVGL.Texture.prototype.isReady = function () {
+	return (this.ready);
+};
+
+/**
+ * Called on texture file loading end.
+ *
+ * @private
+ */
+VVGL.Texture.prototype.onLoad = function () {
+    this.ready = true;
+};
+
+/**
+ * Called on texture file loading error.
+ *
+ * @private
+ */
+VVGL.Texture.prototype.onError = function () {
+    throw new VVGL.Exception("Could not load texture: " + this.image.src);
+};
+/**
+ * @class
+ * @classdesc Time lord.
+ */
+VVGL.Clock = function () {
+	this.reset();
+};
+
+/**
+ * Return elapsed time (in miliseconds) from last reset.
+ * 
+ * @return {number} Elapsed time since last reset.
+ */
+VVGL.Clock.prototype.getElapsedTime = function () {
+	return (new Date().getTime() - this.lastTime);
+};
+
+/**
+ * Reset clock counter.
+ * Called on creation.
+ * 
+ * @return {number} Elapsed time since last reset.
+ */
+VVGL.Clock.prototype.reset = function () {
+	var newTime = new Date().getTime();
+	var elapsedTime = newTime - this.lastTime;
+	
+	this.lastTime = newTime;
+	
+	return (elapsedTime);
+};
+/**
+ * Enum for render modes of {@link VVGL.Mesh}
+ * 
+ * @readonly
+ * @enum {number}
+ */
+VVGL.RenderMode = {
+	POINTS: 0,
+	LINES: 1,
+	LINES_STRIP: 2,
+	LINES_FAN: 3,
+	TRIANGLES: 4,
+	TRIANGLES_STRIP: 5,
+	TRIANGLES_FAN: 6
+};
+/**
+ * Something that you can select or unselect.
+ * 
+ * @interface
+ */
+VVGL.IBindable = function () {};
+
+VVGL.IBindable.prototype.bind = function () {
+	throw new VVGL.ImplementationException(this, "bind", "IBindable");
+};
+
+VVGL.IBindable.prototype.unbind = function () {
+	throw new VVGL.ImplementationException(this, "unbind", "IBindable");
+};
+/**
+ * Renderable data linkable to {@link VVGL.SceneNode}
+ * 
+ * @abstract
+ * @class
+ * @classdesc Renderable data.
+ * @param {string} type
+ * @todo pass to another folder.
+ */
+VVGL.SceneData = function (type) {
+	this.type = type;
+};
+
+/**
+ * Return data type name.
+ * 
+ * @return {string} Data type.
+ */
+VVGL.SceneData.prototype.getType = function () {
+	return (this.type);
+};
+
+/**
+ * Update node data.
+ * 
+ * @param {number} elapsedTime Elapsed miliseconds from last frame.
+ */
+VVGL.SceneData.prototype.update = function (elapsedTime) {
+	throw new VVGL.ImplementationException(this, "update", "SceneData");
+};
+/**
+ * @class
+ * @classdesc Base camera class.
+ * @extends VVGL.EventsHandler
+ * @extends VVGL.SceneData
+ */
+VVGL.Camera = function () {
+	VVGL.SceneData.call(this, "camera");
+	VVGL.EventsHandler.call(this);
+
+	this.perspective = new VVGL.Mat4();
+	this.view = new VVGL.Mat4();
+	
+	this.position = new VVGL.Vec3(-10, 0, 0);
+	this.target = new VVGL.Vec3(0, 0, 0);
+	this.up = new VVGL.Vec3(0, 0, 1);
+	
+	this.elapsedTime = 0;
+};
+
+VVGL.Camera.prototype = VVGL.fusionClasses(VVGL.SceneData.prototype, VVGL.EventsHandler.prototype);
+
+/**
+ * Eye position.
+ * 
+ * @type {VVGL.Vec3}
+ */
+VVGL.Camera.prototype.position = null;
+
+/**
+ * Eye point looked.
+ * 
+ * @type {VVGL.Vec3}
+ */
+VVGL.Camera.prototype.target = null;
+
+/**
+ * Up vector.
+ * Define scene axis.
+ * 
+ * @type {VVGL.Vec3}
+ */
+VVGL.Camera.prototype.up = null;
+
+/**
+ * Camera angle, in degrees.
+ * 
+ * @type {number}
+ * @default
+ */
+VVGL.Camera.prototype.angle = 60.0;
+
+/**
+ * Camera aspect ratio.
+ * Typically canvas width / canvas height.
+ * 
+ * @type {number}
+ * @default
+ */
+VVGL.Camera.prototype.aspectRatio = 4.0 / 3.0;
+
+/**
+ * Camera minimum display range.
+ * 
+ * @type {number}
+ * @default
+ */
+VVGL.Camera.prototype.minRange = 0.1;
+
+/**
+ * Camera maximum display range.
+ * 
+ * @type {number}
+ * @default
+ */
+VVGL.Camera.prototype.maxRange = 100.0;
+
+
+/**
+ * Return persepctive matrix.
+ * 
+ * @return {VVGL.Mat4}
+ */
+VVGL.Camera.prototype.getPerspective = function () {
+	this.perspective.perspective(this.angle, this.aspectRatio, this.minRange, this.maxRange);
+	return (this.perspective);
+};
+
+/**
+ * Return view matrix.
+ * 
+ * @return {VVGL.Mat4}
+ */
+VVGL.Camera.prototype.getView = function () {
+	this.view.lookAt(this.position, this.target, this.up);
+	return (this.view);
+};
+
+/**
+ * Copy camera parameters to another one.
+ *
+ * @param {VVGL.Camera} copy
+ */
+VVGL.Camera.prototype.copyTo = function (copy) {
+    copy.position = this.position.clone();
+    copy.target = this.target.clone();
+    copy.up = this.up.clone();
+
+    copy.angle = this.angle;
+    copy.aspectRatio = this.aspectRatio;
+    copy.minRange = this.minRange;
+    copy.maxRange = this.maxRange;
+};
+/**
+ * @class
+ * @classdesc Camera free to move everywhere, moving with keyboard, turning with mouse.
+ * @extends VVGL.Camera
+ */
+VVGL.FreeFlyCamera = function () {
+	VVGL.Camera.call(this);
+
+	this.forward = new VVGL.Vec3();
+	this.left = new VVGL.Vec3();
+	this.move = new VVGL.Vec3();
+
+	this.angleX = 0;
+	this.angleY = 0;
+	
+	this.recalcVectors();
+
+	this.addKeyListener(VVGL.KeyCode.W, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceFront));
+	this.addKeyListener(VVGL.KeyCode.S, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceBack));
+	this.addKeyListener(VVGL.KeyCode.D, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceRight));
+	this.addKeyListener(VVGL.KeyCode.A, new VVGL.KeyEventListener(VVGL.FreeFlyCamera.advanceLeft));
+	
+	this.addMouseMovementListener(new VVGL.MouseMovementListener(VVGL.FreeFlyCamera.turnCamera));
+};
+
+VVGL.FreeFlyCamera.prototype = Object.create(VVGL.Camera.prototype);
+
+/**
+ * Coefficient between 1 and 0 proportional to movement inertia.
+ * 
+ * @type {number}
+ * @default
+ */
+VVGL.FreeFlyCamera.prototype.inertiaCoef = 0.95;
+
+/**
+ * Movements speed.
+ * 
+ * @type {number}
+ * @default
+ */
+VVGL.FreeFlyCamera.prototype.speed = 0.01;
+
+/**
+ * Rotation speed.
+ * 
+ * @type {number}
+ * @default
+ */
+VVGL.FreeFlyCamera.prototype.sensitivity = 0.005;
+
+
+/**
+ * Recalc forward and left vectors.
+ * 
+ * @private
+ * @todo Use math helper to trigonometry.
+ */
+VVGL.FreeFlyCamera.prototype.recalcVectors = function () {
+	this.forward.x = Math.cos(this.angleY) * Math.cos(this.angleX);
+	this.forward.y = Math.cos(this.angleY) * Math.sin(this.angleX);
+	this.forward.z = Math.sin(this.angleY);
+	
+	this.forward.copyTo(this.left);
+	this.left.crossProduct(this.up);
+	this.left.normalize();
+	
+	this.position.copyTo(this.target);
+	this.target.sub(this.forward);
+};
+
+/**
+ * Update camera data.
+ * Move position if camera was moving,
+ * update movement with inertia,
+ * and recalc other vectors.
+ * 
+ * @override
+ * @param {number} elapsedTime
+ */
+VVGL.FreeFlyCamera.prototype.update = function (elapsedTime) {
+	var movementScale = this.speed * elapsedTime;
+
+    this.position.x += this.move.x * movementScale;
+    this.position.y += this.move.y * movementScale;
+    this.position.z += this.move.z * movementScale;
+
+	this.move.scale(this.inertiaCoef);
+	
+	this.recalcVectors();
+};
+
+
+/**
+ * Advance to front event listener.
+ * 
+ * @private
+ * @static
+ * @param {VVGL.FreeFlyCamera} camera
+ */
+VVGL.FreeFlyCamera.advanceFront = function (camera) {
+	camera.move.sub(camera.forward);
+};
+
+/**
+ * Advance to back event listener.
+ * 
+ * @private
+ * @static
+ * @param {VVGL.FreeFlyCamera} camera
+ */
+VVGL.FreeFlyCamera.advanceBack = function (camera) {
+	camera.move.add(camera.forward);
+};
+
+/**
+ * Advance to right event listener.
+ * 
+ * @private
+ * @static
+ * @param {VVGL.FreeFlyCamera} camera
+ */
+VVGL.FreeFlyCamera.advanceRight = function (camera) {
+	camera.move.sub(camera.left);
+};
+
+/**
+ * Advance to left event listener.
+ * 
+ * @private
+ * @static
+ * @param {VVGL.FreeFlyCamera} camera
+ */
+VVGL.FreeFlyCamera.advanceLeft = function (camera) {
+	camera.move.add(camera.left);
+};
+
+/**
+ * Copy camera parameters to another one.
+ *
+ * @override
+ * @param {VVGL.Camera} copy
+ */
+VVGL.FreeFlyCamera.prototype.copyTo = function (copy) {
+    VVGL.Camera.prototype.copyTo.call(this, copy);
+
+    copy.angleX = this.angleX;
+    copy.angleY = this.angleY;
+};
+
+/**
+ * Turn camera mouse movement listener.
+ * 
+ * @private
+ * @static
+ * @param {VVGL.FreeFlyCamera} camera
+ * @param {number} x
+ * @param {number} y
+ */
+VVGL.FreeFlyCamera.turnCamera = function (camera, x, y) {
+	if (VVGL.Mouse.isLocked || VVGL.Mouse.buttonIsPressed(VVGL.MouseButton.LEFT)) {
+		var yMax = VVGL.Maths.PI / 2 - 0.01;
+		
+		camera.angleX += x * camera.sensitivity;
+		camera.angleY -= y * camera.sensitivity;
+		if (camera.angleY > yMax) {
+			camera.angleY = yMax;
+		} else if (camera.angleY < -yMax) {
+			camera.angleY = -yMax;
+		}
+	}
+};
+
+/**
+ * Create a new freefly camera with position, target and parameters from another.
+ *
+ * @static
+ * @param {VVGL.Camera} camera Reference camera
+ * @return {VVGL.FreeFlyCamera}
+ */
+VVGL.FreeFlyCamera.copy = function (camera) {
+    var copy = new VVGL.FreeFlyCamera();
+
+    camera.copyTo(copy);
+    copy.recalcVectors();
+
+    return (copy);
+};
+/**
+ * @class
+ * @classdesc Camera with target fixed to a point, with position turning around with mouse movements.
+ * @extends VVGL.Camera
+ */
+VVGL.TrackballCamera = function () {
+	VVGL.Camera.call(this);
+
+    this.move = new VVGL.Vec2();
+
+    this.addMouseButtonPressListener(VVGL.MouseButton.LEFT, new VVGL.MouseButtonEventListener(VVGL.TrackballCamera.stop));
+    this.addMouseMovementListener(new VVGL.MouseMovementListener(VVGL.TrackballCamera.turn));
+    this.addWheelMovementListener(new VVGL.WheelMovementListener(VVGL.TrackballCamera.zoom));
+
+    this.recalcVectors();
+};
+
+VVGL.TrackballCamera.prototype = Object.create(VVGL.Camera.prototype);
+
+/**
+ * Distance between center and position.
+ * Or radius of camera's sphere.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.distance = 10;
+
+/**
+ * Horizontal and vertical rotation speeds.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.rotationSpeed = 0.0001;
+
+/**
+ * Zoom speed.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.zoomSpeed = 0.1;
+
+/**
+ * Coefficient between 1 and 0 proportional to movement inertia.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.inertiaCoef = 0.95;
+
+/**
+ * Horizontal angle.
+ * Defined in radians.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.angleX = 0;
+
+/**
+ * Vertical angle.
+ * Defined in radians.
+ *
+ * @type {number}
+ * @default
+ */
+VVGL.TrackballCamera.prototype.angleY = 0;
+
+/**
+ * Recalc camera position from target and angles.
+ *
+ * @private
+ * @todo Use math helper to trigonometry.
+ */
+VVGL.TrackballCamera.prototype.recalcVectors = function () {
+    this.position.x = Math.cos(this.angleY) * Math.cos(this.angleX);
+    this.position.y = Math.cos(this.angleY) * Math.sin(this.angleX);
+    this.position.z = Math.sin(this.angleY);
+    this.position.scale(this.distance);
+    this.position.add(this.target);
+
+    this.move.scale(this.inertiaCoef);
+};
+
+/**
+ * Update camera data.
+ * Move position if camera was turning,
+ * update movement with inertia,
+ * and recalculate other vectors.
+ *
+ * @override
+ * @param {number} elapsedTime
+ */
+VVGL.TrackballCamera.prototype.update = function (elapsedTime) {
+    var yMax = VVGL.Maths.PI / 2 - 0.01;
+    this.angleX += this.move.x * elapsedTime;
+    this.angleY += this.move.y * elapsedTime;
+
+    if (this.angleY > yMax) {
+        this.angleY = yMax;
+    } else if (this.angleY < -yMax) {
+        this.angleY = -yMax;
+    }
+
+    this.recalcVectors();
+};
+
+/**
+ * Copy camera parameters to another one.
+ *
+ * @override
+ * @param {VVGL.Camera} copy
+ */
+VVGL.TrackballCamera.prototype.copyTo = function (copy) {
+    VVGL.Camera.prototype.copyTo.call(this, copy);
+
+    copy.angleX = this.angleX;
+    copy.angleY = this.angleY;
+};
+
+/**
+ * Set camera zoom distance to current distance between position and target.
+ */
+VVGL.TrackballCamera.prototype.fixDistanceToCurrent = function () {
+    this.distance = VVGL.Vec3.distance(this.position, this.target);
+};
+
+
+/**
+ * Turn camera mouse movement listener.
+ *
+ * @private
+ * @static
+ * @param {VVGL.TrackballCamera} camera
+ * @param {number} x
+ * @param {number} y
+ */
+VVGL.TrackballCamera.turn = function (camera, x, y) {
+    if (VVGL.Mouse.isLocked || VVGL.Mouse.buttonIsPressed(VVGL.MouseButton.LEFT)) {
+        camera.move.x += x * camera.rotationSpeed;
+        camera.move.y -= y * camera.rotationSpeed;
+    }
+};
+
+/**
+ * Stop camera mouse pressure listener.
+ *
+ * @private
+ * @static
+ * @param {VVGL.TrackballCamera} camera
+ * @param {number} x X mouse position
+ * @param {number} y Y mouse position
+ */
+VVGL.TrackballCamera.stop = function (camera, x, y) {
+    camera.move.x = 0;
+    camera.move.y = 0;
+};
+
+/**
+ * Zoom camera wheel movement listener.
+ *
+ * @private
+ * @static
+ * @param {VVGL.TrackballCamera} camera
+ * @param {number} x X mouse position
+ * @param {number} y Y mouse position
+ * @param {number} deltaX Horizontal scroll
+ * @param {number} deltaY Vertical scroll
+ * @param {number} deltaZ No idea
+ */
+VVGL.TrackballCamera.zoom = function (camera, x, y, deltaX, deltaY, deltaZ) {
+    while (deltaY > 0) {
+        camera.distance += camera.distance * camera.zoomSpeed;
+        --deltaY;
+    }
+    while (deltaY < 0) {
+        camera.distance -= camera.distance * camera.zoomSpeed;
+        ++deltaY;
+    }
+};
+
+/**
+ * Create a new trackball camera with position, target and parameters from another.
+ *
+ * @static
+ * @param {VVGL.Camera} camera Reference camera
+ * @return {VVGL.TrackballCamera}
+ */
+VVGL.TrackballCamera.copy = function (camera) {
+    var copy = new VVGL.TrackballCamera();
+
+    camera.copyTo(copy);
+    copy.fixDistanceToCurrent();
+    copy.recalcVectors();
+
+    return (copy);
+};
+/**
+ * Super singleton manager of canvas, graphic and physic engine.
+ * This class has to be instanciate only once in your program.
+ * You can then access your instance with {@link VVGL.Application3D.access}
+ *
+ * @class
+ * @classdesc Super singleton manager of canvas, graphic and physic engine.
+ * @extends VVGL.Application
+ * @param {string} canvasId Id of your HTML canvas.
+ */
+VVGL.Application3D = function (canvasId) {
+    VVGL.Application.call(this, canvasId);
+
+    this.initContext();
+    this.renderer = new VVGL.Renderer();
+};
+
+VVGL.Application3D.prototype = Object.create(VVGL.Application.prototype);
+
+/**
+ * Initialize WebGL context.
+ *
+ * @private
+ */
+VVGL.Application3D.prototype.initContext = function () {
+    try {
+        this.context = this.canvas.getContext("experimental-webgl");
+    } catch (exception) {
+        throw new VVGL.Exception("Cannot initialize WebGL. Sorry for that.");
+    }
+
+    this.context.viewportWidth = this.canvas.width;
+    this.context.viewportHeight = this.canvas.height;
+    this.context.viewport(0, 0, this.canvas.width, this.canvas.height);
+    gl = this.context; // Singleton for easier use.
+};
+
+/**
+ * Get application WebGL renderer.
+ *
+ * @return {VVGL.Renderer} Application renderer.
+ */
+VVGL.Application3D.prototype.getRenderer = function () {
+    return (this.renderer);
+};
+
+
+/**
+ * Access application instance
+ *
+ * @static
+ * @return {VVGL.Application3D}
+ */
+VVGL.Application3D.access = function () {
+    return (VVGL.Application.access());
+};
+/**
+ * @class
+ * @classdesc Handle interns OpenGL errors.
+ * @extends VVGL.Exception
+ * @private
+ */
+VVGL.GLErrorException = function (func, error) {
+	var message = "OpenGL error after " + func + ": " + this.interpreteError(error);
+	VVGL.Exception.call(this, message, "GLInternError");
+};
+
+VVGL.GLErrorException.prototype = Object.create(VVGL.Exception.prototype);
+
+/**
+ * Get appropriate error message from error enum.
+ * 
+ * @private
+ * @param {number} error GLenum error id.
+ */
+VVGL.GLErrorException.prototype.interpreteError = function (error) {
+	var errors = [];
+	errors[gl.INVALID_ENUM]						= "Invalid enum";
+	errors[gl.INVALID_VALUE]					= "Invalid value";
+	errors[gl.INVALID_OPERATION]				= "Invalid operation";
+	errors[gl.INVALID_FRAMEBUFFER_OPERATION]	= "Invalid framebuffer operation";
+	errors[gl.OUT_OF_MEMORY]					= "Out of memory";
+	errors[gl.STACK_UNDERFLOW]					= "Stack underflow";
+	errors[gl.STACK_OVERFLOW]					= "Stack overflow";
+	
+	return (errors[error]);
+};
+
+
+/**
+ * Check if something bad happened.
+ * If yes, throw an exception with corresponding error message.
+ * 
+ * @static
+ * @throws {VVGL.GLErrorException}
+ */
+VVGL.GLErrorException.checkError = function (func) {
+	var error = gl.getError();
+	if (error !== gl.NO_ERROR) {
+		throw new VVGL.GLErrorException(func, error);
+	}
+};
+/**
+ * @class
+ * @classdesc Exception throwed on ressource initialisation fail.
+ * @extends VVGL.Exception
+ * @param {Object} object Ressource linked to problem.
+ * @param {string} message Problem resume.
+ */
+VVGL.GLRessourceException = function (ressource, message) {
+	VVGL.Exception.call(this, message, "GLRessourceError");
+	this.ressource = ressource;
+};
+
+VVGL.GLRessourceException.prototype = Object.create(VVGL.Exception.prototype);
+
+/**
+ * Ressource linked to problem.
+ * 
+ * @type {Object}
+ */
+VVGL.GLRessourceException.prototype.ressource = null;
+/**
+ * @class
+ * @extends VVGL.SceneData
+ * @classdesc Abstract base class for all lights.
+ * @param {string} name Uniform name in shader.
+ */
+VVGL.Light = function (name) {
+	VVGL.SceneData.call(this, "light");
+	this.name = name;
+	this.color = VVGL.Color.white.clone();
+};
+
+VVGL.Light.prototype = Object.create(VVGL.SceneData.prototype);
+
+/**
+ * @type {VVGL.Color}
+ * @default
+ */
+VVGL.Light.prototype.color = VVGL.Color.white;
+
+/**
+ * Send light data to shader.
+ * 
+ * @abstract
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.Light.prototype.sendToShader = function (shader) {
+	throw VVGL.ImplementationException(this, "sendToShader", "Light");
+};
+/**
+ * @class
+ * @classdesc Minimum light level for all vertices.
+ * @extends VVGL.Light
+ * @param {string} name Uniform name in shader.
+ */
+VVGL.AmbianceLight = function (name) {
+	VVGL.Light.call(this, name);
+};
+
+VVGL.AmbianceLight.prototype = Object.create(VVGL.Light.prototype);
+
+/**
+ * Send data to shader.
+ * 
+ * @override
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.AmbianceLight.prototype.sendToShader = function (shader) {
+	shader.setColorUniform(this.name + ".color", this.color);
+};
+
+/**
+ * Do nothing for ambiance light.
+ * 
+ * @param {number} elapsedTime Elapsed miliseconds from last frame.
+ */
+VVGL.AmbianceLight.prototype.update = function (elapsedTime) {};
+/**
+ * @class
+ * @classdesc Light from a specific Direction.
+ * @extends VVGL.Light
+ * @param {string} name Uniform name in shader.
+ */
+VVGL.DirectionLight = function (name) {
+	VVGL.Light.call(this, name);
+	this.direction = new VVGL.Vec3();
+};
+
+VVGL.DirectionLight.prototype = Object.create(VVGL.Light.prototype);
+
+/**
+ * @type {VVGL.Vec3}
+ */
+VVGL.DirectionLight.prototype.direction = null;
+
+/**
+ * Send data to shader.
+ * 
+ * @override
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.DirectionLight.prototype.sendToShader = function (shader) {
+	shader.setColorUniform(this.name + ".color", this.color);
+	shader.setVector3Uniform(this.name + ".direction", this.direction);
+};
+
+/**
+ * Do nothing for direction light.
+ * 
+ * @todo maybe update direction ?
+ * @param {number} elapsedTime Elapsed miliseconds from last frame.
+ */
+VVGL.DirectionLight.prototype.update = function (elapsedTime) {};
+/**
+ * @class
+ * @classdesc Light from a specific spot.
+ * @extends VVGL.Light
+ * @param {string} name Uniform name in shader.
+ */
+VVGL.SpotLight = function (name) {
+	VVGL.Light.call(this, name);
+	this.position = new VVGL.Vec3();
+};
+
+VVGL.SpotLight.prototype = Object.create(VVGL.Light.prototype);
+
+/**
+ * @type {VVGL.Vec3}
+ */
+VVGL.SpotLight.prototype.position = null;
+
+/**
+ * @type {VVGL.Vec4}
+ * @default
+ */
+VVGL.SpotLight.prototype.power = 1.0;
+
+/**
+ * Send data to shader.
+ * 
+ * @override
+ * @param {VVGL.ShaderProgram} shader
+ */
+VVGL.SpotLight.prototype.sendToShader = function (shader) {
+	shader.setFloatUniform(this.name + ".power", this.power);
+	shader.setColorUniform(this.name + ".color", this.color);
+	shader.setVector3Uniform(this.name + ".position", this.position);
+};
+
+/**
+ * Update light position from model matrix.
+ * 
+ * @todo update position
+ * @param {number} elapsedTime Elapsed miliseconds from last frame.
+ */
+VVGL.SpotLight.prototype.update = function (elapsedTime) {
+};
+/**
  * Can be a vertice feature (position, color, textureCoord or normal) or Element indices.
  * 
  * @class
@@ -3002,7 +3167,7 @@ VVGL.ArrayBuffer.prototype.unbind = function () {
  */
 VVGL.Mesh = function (renderMode) {
 	VVGL.SceneData.call(this, "mesh");
-	renderMode = VVGL.setIfUndefined(renderMode, VVGL.RenderMode.TRIANGLES);
+	renderMode = renderMode !== undefined ? renderMode : VVGL.RenderMode.TRIANGLES;
 	
 	this.verticesBuffers = [];
 	this.useColor = false;
@@ -3151,7 +3316,7 @@ VVGL.Mesh.prototype.addIndices = function (indices) {
 /**
  * Set mesh texture. Necessary if textureCoords are used.
  * 
- * @param {VVGL.Texture} texture
+ * @param {VVGL.GLTexture} texture
  */
 VVGL.Mesh.prototype.setTexture = function (texture) {
 	this.texture = texture;
@@ -3160,7 +3325,7 @@ VVGL.Mesh.prototype.setTexture = function (texture) {
 /**
  * Set shader program.
  * 
- * @param {VVGL.ShaderProgram} texture
+ * @param {VVGL.ShaderProgram} shader
  */
 VVGL.Mesh.prototype.setShader = function (shader) {
 	this.shader = shader;
@@ -3359,7 +3524,7 @@ VVGL.FrameRender.prototype.render = function (camera) {
 /**
  * Webgl Renderer.
  * Graphics control panel.
- * Accessible directly from {@link VVGL.Application}.
+ * Accessible directly from {@link VVGL.Application3D}.
  *
  * @class
  * @classdesc Webgl Renderer.
@@ -3517,40 +3682,6 @@ VVGL.Scene.prototype.getRoot = function () {
 };
 /**
  * @class
- * @classdesc Manager of scenes selection.
- * @private
- */
-VVGL.SceneManager = function () {
-	this.scenes = [];
-	this.currentScene = null;
-};
-
-/**
- * Add a new scene to list.
- * 
- * @param {string} scene Scene name.
- * @param {VVGL.Scene} scene New scene to add to list.
- * @param {Boolean} select The new scene is now the current one if this param is true. Set to false if undefined.
- */
-VVGL.SceneManager.prototype.addScene = function(name, scene, select) {
-	select = VVGL.setIfUndefined(select, false);
-	
-	this.scenes[name] = scene;
-	if (select) {
-		this.currentScene = scene;
-	}
-};
-
-/**
- * Return last selectioned scene, or null if no scene is selectioned.
- * 
- * @return {VVGL.Scene} Last selectioned scene, or null if no scene is selectioned.
- */
-VVGL.SceneManager.prototype.getCurrentScene = function () {
-	return (this.currentScene);
-};
-/**
- * @class
  * @classdesc Transformable element (base for {@link VVGL.SceneNode})
  */
 VVGL.Transformable = function () {
@@ -3699,11 +3830,11 @@ VVGL.Transformable.prototype.getMatrix = function () {
  */
 VVGL.SceneNode = function (data, id) {
 	VVGL.Transformable.call(this);
-	this.data = VVGL.setIfUndefined(data, null);
-    this.id = VVGL.setIfUndefined(id, VVGL.SceneNode.getUniqueId());
+	this.data = data ? data : null;
+	this.id = id ? id : VVGL.SceneNode.getUniqueId();
 	this.parent = null;
 	this.children = [];
-    ++VVGL.SceneNode.created;
+	++VVGL.SceneNode.created;
 };
 
 VVGL.SceneNode.prototype = Object.create(VVGL.Transformable.prototype);
@@ -4223,37 +4354,33 @@ VVGL.ShaderProgram.createFromStrings = function (vertexString, fragmentString) {
 	return (new VVGL.ShaderProgram(vertexShader, fragmentShader));
 };
 /**
- * Create new texture from image file.
+ * Create new bindable texture from image file.
  * 
  * @class
  * @classdesc Bindable texture.
+ * @extends {VVGL.Texture}
  * @implements {VVGL.IBindable}
  * @param {string} source Image file path.
- * @todo Add texture manager.
  */
-VVGL.Texture = function (source) {
-	var me = this;
-	
+VVGL.GLTexture = function (source) {
+    VVGL.Texture.call(this, source);
+
 	this.texture = gl.createTexture();
-	this.image = new Image();
-	this.image.onload = function () {me.onLoad();};
-	this.image.onerror = function () {me.onError();};
-	this.image.src = source;
 };
 
-VVGL.Texture.prototype = Object.create(VVGL.IBindable.prototype);
+VVGL.GLTexture.prototype = Object.create(VVGL.Texture.prototype);
 
 /**
  * Define this texture as used.
  */
-VVGL.Texture.prototype.bind = function () {
+VVGL.GLTexture.prototype.bind = function () {
 	gl.bindTexture(gl.TEXTURE_2D, this.texture);
 };
 
 /**
  * Define no texture as used.
  */
-VVGL.Texture.prototype.unbind = function () {
+VVGL.GLTexture.prototype.unbind = function () {
 	gl.bindTexture(gl.TEXTURE_2D, null);
 };
 
@@ -4262,7 +4389,7 @@ VVGL.Texture.prototype.unbind = function () {
  * 
  * @todo Use multiple textures.
  */
-VVGL.Texture.prototype.activate = function () {
+VVGL.GLTexture.prototype.activate = function () {
 	var shader = VVGL.ShaderProgram.currentProgram;
 	
     gl.activeTexture(gl.TEXTURE0);
@@ -4270,22 +4397,15 @@ VVGL.Texture.prototype.activate = function () {
     shader.setIntUniform("uTexture", 0);
 };
 
-
-/**
- * Called if image loading failed.
- * 
- * @private
- */
-VVGL.Texture.prototype.onError = function () {
-	alert("Failed to load texture " + this.image.src);
-};
-
 /**
  * Called once image finished to load.
  * 
  * @private
+ * @override
  */
-VVGL.Texture.prototype.onLoad = function () {
+VVGL.GLTexture.prototype.onLoad = function () {
+    VVGL.Texture.prototype.onLoad.call(this);
+
 	this.bind();
 	{
 	    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -4293,36 +4413,5 @@ VVGL.Texture.prototype.onLoad = function () {
 	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 	    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 	}
-    this.unbind();
-};
-/**
- * @class
- * @classdesc Time lord.
- */
-VVGL.Clock = function () {
-	this.reset();
-};
-
-/**
- * Return elapsed time (in miliseconds) from last reset.
- * 
- * @return {number} Elapsed time since last reset.
- */
-VVGL.Clock.prototype.getElapsedTime = function () {
-	return (new Date().getTime() - this.lastTime);
-};
-
-/**
- * Reset clock counter.
- * Called on creation.
- * 
- * @return {number} Elapsed time since last reset.
- */
-VVGL.Clock.prototype.reset = function () {
-	var newTime = new Date().getTime();
-	var elapsedTime = newTime - this.lastTime;
-	
-	this.lastTime = newTime;
-	
-	return (elapsedTime);
+	this.unbind();
 };
