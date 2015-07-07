@@ -69,8 +69,8 @@ PlanetForm.submit = function () {
         var data = planetForm.getPlanetData();
         VVGL.Application.access().createPlanet(data);
     } catch (exception) {
-        if (exception.what) {
-            alert(exception.what());
+        if (exception.toString) {
+            alert(exception.toString());
         } else {
             alert(exception);
         }

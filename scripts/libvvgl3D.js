@@ -1038,7 +1038,7 @@ VVGL.Color.prototype.toString = function () {
  * @param {string} [name="Error"]
  */
 VVGL.Exception = function (message, name) {
-	Error.prototype.call(this);
+	Error.call(this);
 	this.name = name ? name : "Error"
 	this.message = message;
 };
@@ -2231,11 +2231,31 @@ VVGL.Texture.prototype.isReady = function () {
 };
 
 /**
+ * Get image width in pixels.
+ *
+ * @return {number}
+ */
+VVGL.Texture.prototype.getWidth = function () {
+    return (this.width);
+};
+
+/**
+ * Get image height in pixels.
+ *
+ * @return {number}
+ */
+VVGL.Texture.prototype.getHeight = function () {
+    return (this.height);
+};
+
+/**
  * Called on texture file loading end.
  *
  * @private
  */
 VVGL.Texture.prototype.onLoad = function () {
+    this.width = this.image.width;
+    this.height = this.image.height;
     this.ready = true;
 };
 
@@ -2314,7 +2334,6 @@ VVGL.IBindable.prototype.unbind = function () {
  * @class
  * @classdesc Renderable data.
  * @param {string} type
- * @todo pass to another folder.
  */
 VVGL.SceneData = function (type) {
 	this.type = type;
@@ -2851,6 +2870,7 @@ VVGL.Application3D = function (canvasId) {
     VVGL.Application.call(this, canvasId);
 
     this.initContext();
+    this.init3DAPI();
     this.renderer = new VVGL.Renderer();
 };
 
@@ -2872,6 +2892,15 @@ VVGL.Application3D.prototype.initContext = function () {
     this.context.viewportHeight = this.canvas.height;
     this.context.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl = this.context; // Singleton for easier use.
+};
+
+/**
+ * Initialize lib data linked to 3D and WebGL stuff.
+ *
+ * @private
+ */
+VVGL.Application3D.prototype.init3DAPI = function () {
+    VVGL.ShaderProgram.initStaticShaders();
 };
 
 /**
@@ -3353,11 +3382,9 @@ VVGL.Mesh.prototype.render = function () {
 	this.bindArrays();
 	{
 		if (this.indices === null) {
-			VVGL.GLErrorException.checkError("drawArrays before");
 			gl.drawArrays(this.renderMode, 0, this.itemsNumber);
 			VVGL.GLErrorException.checkError("drawArrays");
 		} else {
-			VVGL.GLErrorException.checkError("drawElements before");
 			gl.drawElements(this.renderMode, this.itemsNumber, gl.UNSIGNED_SHORT, 0);
 			VVGL.GLErrorException.checkError("drawElements");
 		}
@@ -3373,6 +3400,154 @@ VVGL.Mesh.prototype.render = function () {
  * @param {number} elapsedTime
  */
 VVGL.Mesh.prototype.update = function (elapsedTime) {};
+/**
+ * Create a new skybox from texture resource.
+ *
+ * @class
+ * @classdesc Textured scene skybox.
+ * @extends {VVGL.Mesh}
+ * @param {VVGL.GLTexture} texture Skybox-format texture.
+ */
+VVGL.Skybox = function (texture) {
+    VVGL.Mesh.call(this, VVGL.RenderMode.TRIANGLES);
+    this.modelMatrix = new VVGL.Mat4();
+    this.type = "skybox";
+    this.texture = texture;
+    this.shader = VVGL.ShaderProgram.basicShader;
+    this.addPositions(this.cubePositions());
+    this.addTextureCoords(this.skyboxTextureCoords());
+    this.addIndices(this.cubeIndices());
+};
+
+VVGL.Skybox.prototype = Object.create(VVGL.Mesh.prototype);
+
+/**
+ * Center skybox to camera's position.
+ *
+ * @param {VVGL.Camera} camera
+ */
+VVGL.Skybox.prototype.centerToCamera = function (camera) {
+    this.modelMatrix.identity();
+    this.modelMatrix.translate(camera.position);
+};
+
+/**
+ * Get skybox model matrix.
+ *
+ * @return {VVGL.Mat4}
+ */
+VVGL.Skybox.prototype.getModelMatrix = function () {
+    return (this.modelMatrix);
+};
+
+/**
+ * Return positions vertices array.
+ *
+ * @private
+ * @return {Array} Positions
+ */
+VVGL.Skybox.prototype.cubePositions = function () {
+    return [
+        // Front face
+        -10.0,  10.0, -10.0,
+        10.0,  10.0, -10.0,
+        10.0,  10.0,  10.0,
+        -10.0,  10.0,  10.0,
+
+        // Back face
+        -10.0, -10.0, -10.0,
+        -10.0, -10.0,  10.0,
+        10.0, -10.0, 10.0,
+        10.0, -10.0, -10.0,
+
+        // Top face
+        -10.0, -10.0,  10.0,
+        -10.0,  10.0,  10.0,
+        10.0,  10.0,  10.0,
+        10.0, -10.0,  10.0,
+
+        // Bottom face
+        -10.0, -10.0, -10.0,
+        10.0, -10.0, -10.0,
+        10.0,  10.0, -10.0,
+        -10.0,  10.0, -10.0,
+
+        // Right face
+        10.0, -10.0, -10.0,
+        10.0, -10.0,  10.0,
+        10.0,  10.0,  10.0,
+        10.0,  10.0, -10.0,
+
+        // Left face
+        -10.0, -10.0, -10.0,
+        -10.0,  10.0, -10.0,
+        -10.0,  10.0,  10.0,
+        -10.0, -10.0,  10.0
+    ];
+};
+
+/**
+ * Return texture coords vertices array.
+ *
+ * @private
+ * @return {Array} Texture coords
+ */
+VVGL.Skybox.prototype.skyboxTextureCoords = function () {
+    return [
+        // Front face
+        1/4, 2/4,
+        2/4, 2/4,
+        2/4, 3/4,
+        1/4, 3/4,
+
+        // Back face
+        4/4, 2/4,
+        4/4, 3/4,
+        3/4, 3/4,
+        3/4, 2/4,
+
+        // Top face
+        1/4, 4/4,
+        1/4, 3/4,
+        2/4, 3/4,
+        2/4, 4/4,
+
+        // Bottom face
+        1/4, 1/4,
+        2/4, 1/4,
+        2/4, 2/4,
+        1/4, 2/4,
+
+        // Right face
+        3/4, 2/4,
+        3/4, 3/4,
+        2/4, 3/4,
+        2/4, 2/4,
+
+        // Left face
+        0/4, 2/4,
+        1/4, 2/4,
+        1/4, 3/4,
+        0/4, 3/4
+    ];
+};
+
+/**
+ * Return indices array.
+ *
+ * @private
+ * @return {Array} Indices
+ */
+VVGL.Skybox.prototype.cubeIndices = function () {
+    return [
+        0,  1,  2,      0,  2,  3,    // front
+        4,  5,  6,      4,  6,  7,    // back
+        8,  9,  10,     8,  10, 11,   // top
+        12, 13, 14,     12, 14, 15,   // bottom
+        16, 17, 18,     16, 18, 19,   // right
+        20, 21, 22,     20, 22, 23    // left
+    ];
+};
 /**
  * @class
  * @classdesc Mesh representing axis in 3 Dimentions.
@@ -3416,7 +3591,7 @@ VVGL.FrameRender = function () {
 VVGL.FrameRender.prototype.reset = function () {
 	this.datas["camera"]	= [];
 	this.datas["light"]		= [];
-	this.datas["mesh"]		= [];
+    this.datas["mesh"]		= [];
 };
 
 /**
@@ -3480,34 +3655,63 @@ VVGL.FrameRender.prototype.addData = function (data, matrix) {
  * Configure perspective and view matrices from active camera.
  * 
  * @private
+ * @param {VVGL.ShaderProgram} shader
  * @param {VVGL.Camera} camera
- * @return {VVGL.Mat4} View matrix
  */
-VVGL.FrameRender.prototype.configureFromCamera = function (activeCamera) {
-	var program = VVGL.ShaderProgram.currentProgram;
-	program.setMatrix4Uniform("uPerspectiveMatrix", activeCamera.getPerspective());
-	program.setMatrix4Uniform("uViewMatrix", activeCamera.getView());
-	
-	return (activeCamera.getView());
+VVGL.FrameRender.prototype.configureFromCamera = function (shader, activeCamera) {
+	shader.setMatrix4Uniform("uPerspectiveMatrix", activeCamera.getPerspective());
+	shader.setMatrix4Uniform("uViewMatrix", activeCamera.getView());
+};
+
+/**
+ * Render skybox to screen.
+ *
+ * @private
+ * @param {VVGL.Camera} camera
+ * @param {VVGL.Skybox} skybox
+ */
+VVGL.FrameRender.prototype.renderSkybox = function (camera, skybox) {
+    var shader = skybox.getShader();
+    var renderer = VVGL.Application3D.access().getRenderer();
+    var backfaceCulling = renderer.isBackfaceCullingEnabled();
+
+    shader.bind();
+
+    skybox.centerToCamera(camera);
+    this.configureFromCamera(shader, camera);
+    shader.setMatrix4Uniform("uModelMatrix", skybox.getModelMatrix());
+
+    if (backfaceCulling) {
+        renderer.disableBackfaceCulling();
+    }
+    skybox.render();
+    if (backfaceCulling) {
+        renderer.enableBackfaceCulling();
+    }
 };
 
 /**
  * Render everything.
- * 
+ *
  * @param {VVGL.Camera} camera Active camera
+ * @param {VVGL.Skybox} skybox Scene skybox (can be null if none)
  */
-VVGL.FrameRender.prototype.render = function (camera) {
-	var viewMatrix = this.configureFromCamera(camera);
-	var modelViewMatrix = new VVGL.Mat4();
+VVGL.FrameRender.prototype.render = function (camera, skybox) {
 	var normalMatrix = new VVGL.Mat3();
-	
+
+    if (skybox) {
+        this.renderSkybox(camera, skybox);
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+    }
+
 	for (var i in this.datas["mesh"]) {
 		var meshes = this.datas["mesh"][i];
-		var program = meshes.shader;
+		var shader = meshes.shader;
 		var list = meshes.list;
-		program.bind();
-		
-		this.addLights(program);
+		shader.bind();
+        this.configureFromCamera(shader, camera);
+
+		this.addLights(shader);
 		
 		for (var i in list) {
 			var mesh = list[i];
@@ -3515,8 +3719,8 @@ VVGL.FrameRender.prototype.render = function (camera) {
 			normalMatrix.normalFromMat4(mesh.matrix);
 			normalMatrix.transpose();
 			
-			program.setMatrix4Uniform("uModelMatrix", mesh.matrix);
-			program.setMatrix3Uniform("uNormalMatrix", normalMatrix);
+			shader.setMatrix4Uniform("uModelMatrix", mesh.matrix);
+			shader.setMatrix3Uniform("uNormalMatrix", normalMatrix);
 			mesh.data.render();
 		}
 	}
@@ -3532,7 +3736,7 @@ VVGL.FrameRender.prototype.render = function (camera) {
 VVGL.Renderer = function () {
 	this.enableDepth();
 	this.enableBackfaceCulling();
-	gl.enable(gl.CULL_FACE);
+    gl.enable(gl.CULL_FACE);
 	this.backgroundColor = new VVGL.Color();
 	this.setBackgroundColor(VVGL.Color.black);
 	
@@ -3571,15 +3775,15 @@ VVGL.Renderer.prototype.prepareFrame = function () {
  */
 VVGL.Renderer.prototype.drawScene = function (scene) {
 	this.frameRender.reset();
-	
-	var camera = scene.getActiveCamera();
-	if (camera === null) {
-		throw new VVGL.Exception("No active camera for scene rendering.");
-	}
-	
+
 	scene.getRoot().render(this);
-	
-	this.frameRender.render(camera);
+
+    var camera = scene.getActiveCamera();
+    if (camera === null) {
+        throw new VVGL.Exception("No active camera for scene rendering.");
+    }
+
+	this.frameRender.render(camera, scene.getSkybox());
 };
 
 /**
@@ -3619,15 +3823,6 @@ VVGL.Renderer.prototype.disableDepth = function () {
 };
 
 /**
- * Check if depth test is enabled.
- * 
- * @return {boolean}
- */
-VVGL.Renderer.prototype.isDepthEnabled = function () {
-	return (this.depthTest);
-};
-
-/**
  * Active backface culling.
  * Enabled by default.
  */
@@ -3637,10 +3832,19 @@ VVGL.Renderer.prototype.enableBackfaceCulling = function () {
 };
 
 /**
+ * Check if backfaceculling is enabled.
+ *
+ * @return {boolean}
+ */
+VVGL.Renderer.prototype.isBackfaceCullingEnabled = function () {
+    return (this.backfaceCulling);
+};
+
+/**
  * Disable backface culling.
  */
 VVGL.Renderer.prototype.disableBackfaceCulling = function () {
-	this.depthTest = false;
+	this.backfaceCulling = false;
 	gl.disable(gl.CULL_FACE);
 };
 /**
@@ -3650,6 +3854,7 @@ VVGL.Renderer.prototype.disableBackfaceCulling = function () {
 VVGL.Scene = function () {
 	this.root = new VVGL.SceneNode(null);
 	this.activeCamera = null;
+    this.skybox = null;
 };
 
 
@@ -3663,6 +3868,25 @@ VVGL.Scene.prototype.setActiveCamera = function (camera) {
 };
 
 /**
+ * Set scene skybox.
+ * Can be null to cancel skybox.
+ *
+ * @param {VVGL.Skybox} skybox Skybox object or null to cancel it.
+ */
+VVGL.Scene.prototype.setSkybox = function (skybox) {
+    this.skybox = skybox;
+};
+
+/**
+ * Return root scene node.
+ *
+ * @return {VVGL.SceneNode} Scene root node.
+ */
+VVGL.Scene.prototype.getRoot = function () {
+    return (this.root);
+};
+
+/**
  * Return active camera.
  * Return null if none camera is setted.
  * 
@@ -3673,12 +3897,12 @@ VVGL.Scene.prototype.getActiveCamera = function () {
 };
 
 /**
- * Return root scene node.
- * 
- * @return {VVGL.SceneNode} Scene root node.
+ * Return scene skybox or null if none.
+ *
+ * @return {VVGL.Skybox} Scene skybox.
  */
-VVGL.Scene.prototype.getRoot = function () {
-	return (this.root);
+VVGL.Scene.prototype.getSkybox = function () {
+    return (this.skybox);
 };
 /**
  * @class
@@ -4008,13 +4232,13 @@ VVGL.Attribute.prototype.disable = function () {
  * Compiled vertex or fragment shader.
  * Do not try to create instances yourself.
  * Just do not.
- * 
- * @class Compiled vertex or fragment shader.
- * @constructor
+ *
+ * @class
+ * @classdesc Compiled vertex or fragment shader.
  * @private
  * @param {string} code GLSL code to compile.
  * @param {number} type GL maccro corresponding to shader type (vertex or fragment).
- * @param {string} elementId Optional element id to indicate which is this shader in case of compilation failure.
+ * @param {string} [elementId] Optional element id to indicate which is this shader in case of compilation failure.
  */
 VVGL.Shader = function (code, type, elementId) {
 	this.type = VVGL.Shader.getStringType(type);
@@ -4023,20 +4247,16 @@ VVGL.Shader = function (code, type, elementId) {
 	gl.compileShader(this.shader);
 	
     if (!gl.getShaderParameter(this.shader, gl.COMPILE_STATUS)) {
-    	var message;
-    	
-    	if (elementId === undefined) {
-    		message = "Couldn't compile " + this.type + " shader: ";
-    	} else {
-    		message = "Couldn't compile " + elementId + ": ";
-    	}
+        elementId = elementId ? elementId : this.type + " shader";
+		var message = "Couldn't compile " + elementId + ": ";
     	throw new VVGL.GLRessourceException(this, message + gl.getShaderInfoLog(this.shader));
     }
 };
 
 /**
  * Return a shader type in a string from gl shader type enum.
- * 
+ *
+ * @static
  * @param {number} type gl.VERTEX_SHADER or gl.FRAGMENT_SHADER
  * @return {string} Shader type name.
  */
@@ -4056,6 +4276,7 @@ VVGL.Shader.getStringType = function (type) {
  * Send an HTTP request for a shader file.
  * 
  * @private
+ * @static
  * @param {string} elementId Element id linked to file.
  * @return {Promise} Future HTTP request result.
  */
@@ -4067,7 +4288,8 @@ VVGL.Shader.getShaderFromHTTP = function (elementId) {
 
 /**
  * Create a shader from an element id linked to shader file.
- * 
+ *
+ * @static
  * @param {string} elementId Element id linked to file.
  * @param {number} type GL maccro corresponding to shader type (vertex or fragment).
  * @return {VVGL.Shader} Created shader.
@@ -4078,20 +4300,137 @@ VVGL.Shader.createFromFile = function(elementId, type) {
     var file = document.getElementById(elementId).src;
     var xhr = new XMLHttpRequest;
     xhr.open("GET", file, false);
-    xhr.send(null); 
+    xhr.send(null);
 
 	if (xhr.status == 200) {
 		shader = new VVGL.Shader(xhr.responseText, type, elementId);
 	} else {
-    	throw new Exception("Http request fail with error code " + xhr.status);
+    	throw new Exception("Http request failed with error code " + xhr.status);
 	}
 	
 	return (shader);
 };
 
-VVGL.Shader.createFronString = function (code, type) {
+/**
+ * Create a vertex or fragment shader from a code string.
+ *
+ * @static
+ * @param {string} code GLSL code to compile.
+ * @param {number} type GL maccro corresponding to shader type (vertex or fragment).
+ * @return {VVGL.Shader} compiled shader.
+ */
+VVGL.Shader.createFromString = function (code, type) {
 	return (new VVGL.Shader(code, type));
 };
+
+
+/**
+ * vertex shader source code for simple texturing and lighting.
+ *
+ * @readonly
+ * @type {string}
+ */
+VVGL.Shader.basicVertexShader = "\
+attribute vec3	aPosition;\n\
+attribute vec4	aColor;\n\
+attribute vec2	aTextureCoord;\n\
+attribute vec3	aNormal;\n\
+\n\
+uniform mat4	uModelMatrix;\n\
+uniform mat4	uViewMatrix;\n\
+uniform mat4	uPerspectiveMatrix;\n\
+uniform mat3	uNormalMatrix;\n\
+\n\
+varying vec3	vPosition;\n\
+varying vec4	vColor;\n\
+varying vec2	vTextureCoord;\n\
+varying vec3	vNormal;\n\
+\n\
+void	main(void)\n\
+{\n\
+    vPosition = (uModelMatrix * vec4(aPosition, 1.0)).xyz;\n\
+    gl_Position = uPerspectiveMatrix * uViewMatrix * uModelMatrix * vec4(aPosition, 1.0);\n\
+    vColor = aColor;\n\
+    vTextureCoord = aTextureCoord;\n\
+    vNormal = normalize(aNormal * uNormalMatrix);\n\
+}\n\
+";
+
+/**
+ * fragment shader source code for basic texturing and lighting.
+ *
+ * @readonly
+ * @type {string}
+ */
+VVGL.Shader.basicFragmentShader = "\
+precision mediump float;\n\
+\n\
+struct AmbianceLight\n\
+{\n\
+    vec3	color;\n\
+};\n\
+\n\
+struct DirectionLight\n\
+{\n\
+    vec3	color;\n\
+    vec3	direction;\n\
+};\n\
+\n\
+struct SpotLight\n\
+{\n\
+    float	power;\n\
+    vec3	position;\n\
+    vec3	color;\n\
+};\n\
+\n\
+varying vec3	vPosition;\n\
+varying vec4	vColor;\n\
+varying vec2	vTextureCoord;\n\
+varying vec3	vNormal;\n\
+\n\
+uniform bool		uUseColor;\n\
+uniform bool		uUseTexture;\n\
+uniform bool		uUseNormal;\n\
+uniform sampler2D	uTexture;\n\
+\n\
+uniform AmbianceLight	aLight;\n\
+uniform DirectionLight	dLight;\n\
+uniform SpotLight	sLight;\n\
+\n\
+vec3	calcLightValue(SpotLight light)\n\
+{\n\
+    vec3	direction;\n\
+    vec3	lighting;\n\
+    float	coef;\n\
+\n\
+    direction = light.position - vPosition;\n\
+    coef = max(dot(vNormal, normalize(direction)), 0.0) * light.power / length(direction);\n\
+    lighting = light.color * coef;\n\
+\n\
+    return (lighting);\n\
+}\n\
+\n\
+void	main(void)\n\
+{\n\
+    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);\n\
+\n\
+    if (uUseColor)\n\
+    {\n\
+        gl_FragColor *= vColor;\n\
+    }\n\
+    if (uUseTexture)\n\
+    {\n\
+        gl_FragColor *= texture2D(uTexture, vec2(vTextureCoord.s, vTextureCoord.t));\n\
+    }\n\
+    if (uUseNormal)\n\
+    {\n\
+        vec3	lighting;\n\
+        lighting = aLight.color;\n\
+        lighting += calcLightValue(sLight);\n\
+        gl_FragColor *= vec4(lighting, 1.0);\n\
+    }\n\
+}\n\
+";
 /**
  * Shader program containing both vertex and fragment shader.
  * Do not try to create instances from the constructor. Call static functions to create it.
@@ -4115,10 +4454,6 @@ VVGL.ShaderProgram = function (vertexShader, fragmentShader) {
 	}
 	
 	this.bind();
-	this.addAttribute("aPosition");
-	this.addAttribute("aColor");
-	this.addAttribute("aTextureCoord");
-	this.addAttribute("aNormal");
 };
 
 /**
@@ -4142,7 +4477,11 @@ VVGL.ShaderProgram.prototype.fragmentShader = null;
  * @param {string} name Attribute name.
  */
 VVGL.ShaderProgram.prototype.addAttribute = function (name) {
-	this.attributes[name] = new VVGL.Attribute(this, name);
+    var attribute = new VVGL.Attribute(this, name);
+
+	this.attributes[name] = attribute;
+
+    return attribute;
 };
 
 /**
@@ -4184,7 +4523,7 @@ VVGL.ShaderProgram.prototype.setAttribute = function (name, buffer) {
 	var attribute = this.attributes[name];
 	
 	if (!attribute) {
-		throw new VVGL.Exception("Trying to get undefined attribute: " + name);
+        attribute = this.addAttribute(name);
 	}
 	
 	attribute.enable();
@@ -4200,7 +4539,7 @@ VVGL.ShaderProgram.prototype.unsetAttribute = function (name) {
 	var attribute = this.attributes[name];
 	
 	if (!attribute) {
-		throw new VVGL.Exception("Trying to get undefined attribute: " + name);
+		throw new VVGL.Exception("Trying to unset undefined attribute: " + name);
 	}
 	
 	attribute.disable();
@@ -4302,6 +4641,17 @@ VVGL.ShaderProgram.prototype.setMatrix4Uniform = function (name, matrix) {
 
 
 /**
+ * Initialize static shaders samples.
+ *
+ * @private
+ * @static
+ */
+VVGL.ShaderProgram.initStaticShaders = function () {
+    VVGL.ShaderProgram.basicShader = VVGL.ShaderProgram.createFromStrings(VVGL.Shader.basicVertexShader, VVGL.Shader.basicFragmentShader);
+};
+
+
+/**
  * Currently used shader program.
  * 
  * @static
@@ -4325,21 +4675,6 @@ VVGL.ShaderProgram.createFromFiles = function (vertexId, fragmentId) {
 };
 
 /**
- * Create a shader program from two element ids linked to shaders scripts.
- * 
- * @static
- * @param {string} vertexId Element id of vertex shader script.
- * @param {string} fragmentId Element id of fragment shader script.
- * @return {VVGL.ShaderProgram} Program created.
- */
-VVGL.ShaderProgram.createFromScripts = function (vertexId, fragmentId) {
-	var vertexShader = VVGL.Shader.createFromScript(vertexId, gl.VERTEX_SHADER);
-	var fragmentShader = VVGL.Shader.createFromScript(fragmentId, gl.FRAGMENT_SHADER);
-	
-	return (new VVGL.ShaderProgram(vertexShader, fragmentShader));
-};
-
-/**
  * Create a shader program from two strings containing shaders's codes.
  * 
  * @static
@@ -4353,6 +4688,15 @@ VVGL.ShaderProgram.createFromStrings = function (vertexString, fragmentString) {
 	
 	return (new VVGL.ShaderProgram(vertexShader, fragmentShader));
 };
+
+
+/**
+ * Ready to use shader program for simple texturing.
+ *
+ * @readonly
+ * @type {VVGL.ShaderProgram}
+ */
+VVGL.ShaderProgram.basicShader = null;
 /**
  * Create new bindable texture from image file.
  * 
@@ -4394,7 +4738,7 @@ VVGL.GLTexture.prototype.activate = function () {
 	
     gl.activeTexture(gl.TEXTURE0);
     this.bind();
-    shader.setIntUniform("uTexture", 0);
+    shader.setIntUniform("uTexture", 0); // TODO understand why 0?
 };
 
 /**
@@ -4402,9 +4746,23 @@ VVGL.GLTexture.prototype.activate = function () {
  * 
  * @private
  * @override
+ * @todo Handle different round methods
  */
 VVGL.GLTexture.prototype.onLoad = function () {
     VVGL.Texture.prototype.onLoad.call(this);
+
+    var valid = (this.width === this.height);
+    if (valid) {
+        var width = this.width;
+        while (width > 1) {
+            width /= 2;
+        }
+        valid = (width === 1);
+    }
+
+    if (!valid) {
+        throw new VVGL.GLRessourceException(this, "Invalid dimentions for texture.");
+    }
 
 	this.bind();
 	{

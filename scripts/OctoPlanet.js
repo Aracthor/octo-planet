@@ -4,7 +4,7 @@ OctoPlanet = function (canvasId) {
     var scene = new VVGL.Scene();
     this.scene = scene;
 	this.getSceneManager().addScene("mainScene", scene, true);
-	
+
 	var shader = VVGL.ShaderProgram.createFromFiles("vertex-shader", "fragment-shader");
     this.shader = shader;
 	
@@ -12,19 +12,15 @@ OctoPlanet = function (canvasId) {
     this.cameraNode = new VVGL.SceneNode(camera);
     scene.getRoot().addChild(this.cameraNode);
     scene.setActiveCamera(camera);
-	
+
 	var alight = new VVGL.AmbianceLight("aLight");
 	alight.color.r = 0.1;
 	alight.color.g = 0.1;
 	alight.color.b = 0.1;
     scene.getRoot().addChild(new VVGL.SceneNode(alight));
 
-	/*
-	var axis = new VVGL.Axis(10.0);
-	axis.setShader(shader);
-	this.axis = axis;
-	scene.getRoot().addChild(new VVGL.SceneNode(axis));
-	*/
+    var skybox = new VVGL.Skybox(new VVGL.GLTexture("textures/stars.png"));
+    scene.setSkybox(skybox);
 
     this.planetGenerator = new PlanetGenerator();
     this.planet = null;
