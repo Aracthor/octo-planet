@@ -2,22 +2,22 @@ VertexPainter = function () {
     this.colors = [];
     this.colors.push({
         height: 0.99,
-        color: VVGL.Color.blue
+        color: new VVGL.Color(0.0, 0.0, 0.5)
     });
     this.colors.push({
         height: 1.0,
-        color: VVGL.Color.cyan
+        color: new VVGL.Color(0.0, 0.5, 0.5)
     });
     this.colors.push({
         height: 1.01,
-        color: VVGL.Color.yellow
+        color: new VVGL.Color(0.5, 0.5, 0.0)
     });
     this.colors.push({
         height: 1.04,
-        color: VVGL.Color.green
+        color: new VVGL.Color(0.0, 0.5, 0.0)
     });
 
-    this.highestColor = new VVGL.Color(0.6, 0.4, 0.0);
+    this.highestColor = new VVGL.Color(0.3, 0.2, 0.0);
 };
 
 VertexPainter.prototype.paint = function (position) {

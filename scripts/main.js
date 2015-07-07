@@ -3,8 +3,8 @@ function	main() {
 		var app = new OctoPlanet("the-canvas");
 		app.start();
 	} catch (exception) {
-		if (exception.type !== undefined) {
-			alert(exception.what());
+		if (exception.toString) {
+			alert(exception.toString());
 		} else {
 			throw exception;
 		}
