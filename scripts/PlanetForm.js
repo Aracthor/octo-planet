@@ -3,10 +3,37 @@ PlanetForm = function () {
     this.tessellationInput = document.getElementById("tessellation-level");
     this.gridDisplay = document.getElementById("display-grid");
     this.cameraType = document.getElementById("camera-type");
-    
+    this.configureTrackballCameraOptions();
+
     this.changeGridDisplay();
 };
 
+
+PlanetForm.prototype.createChangeFunction = function (id, field, camera) {
+    var input = document.getElementById(id);
+
+    return (function () {
+        camera[field] = input.value;
+    });
+};
+
+PlanetForm.prototype.configureTrackballCameraOptions = function () {
+    var camera = VVGL.Application.access().getSceneManager().getCurrentScene().getActiveCamera();
+    this.cameraOptions = document.getElementById("trackball-options");
+
+    document.getElementById("trackball-rotation-speed").onchange = this.createChangeFunction("trackball-rotation-speed", "rotationSpeed", camera);
+    document.getElementById("trackball-zoom-speed").onchange = this.createChangeFunction("trackball-zoom-speed", "zoomSpeed", camera);
+    document.getElementById("trackball-inertia-coef").onchange = this.createChangeFunction("trackball-inertia-coef", "inertiaCoef", camera);
+};
+
+PlanetForm.prototype.configureFreeflyCameraOptions = function () {
+    var camera = VVGL.Application.access().getSceneManager().getCurrentScene().getActiveCamera();
+    this.cameraOptions = document.getElementById("freefly-options");
+
+    document.getElementById("freefly-speed").onchange = this.createChangeFunction("freefly-speed", "speed", camera);
+    document.getElementById("freefly-sensitivity").onchange = this.createChangeFunction("freefly-sensitivity", "sensitivity", camera);
+    document.getElementById("freefly-inertia-coef").onchange = this.createChangeFunction("freefly-inertia-coef", "inertiaCoef", camera);
+};
 
 PlanetForm.prototype.getPlanetData = function () {
     var data = {};
@@ -35,6 +62,10 @@ PlanetForm.prototype.changeCamera = function () {
     var type = this.cameraType.options[this.cameraType.selectedIndex].value;
 
     VVGL.Application.access().changeCamera(type);
+
+    this.cameraOptions.hidden = true;
+    type == "trackball" ? this.configureTrackballCameraOptions() : this.configureFreeflyCameraOptions();
+    this.cameraOptions.hidden = false;
 };
 
 

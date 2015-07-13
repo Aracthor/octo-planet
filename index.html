@@ -43,20 +43,43 @@
                     <br />
                     <br />
 
-                    <fieldset id="camera" style="width: 780px; text-align: left;">
-                        <legend>Camera</legend>
-
-                        <label for="camera-type">Type</label>
-                        <select id="camera-type" onchange="PlanetForm.changeCamera();">
-                            <option value="trackball" selected="selected">Trackball</option>
-                            <option value="freefly">Freefly</option>
-                        </select>
-                    </fieldset>
-
                     <input type="submit" value="create" />
                 </fieldset>
-
             </form>
+
+            <fieldset id="camera" style="width: 800px; text-align: left;">
+                <legend>Camera</legend>
+
+                <label for="camera-type">Type</label>
+                <select id="camera-type" onchange="PlanetForm.changeCamera();">
+                    <option value="trackball" selected="selected">Trackball</option>
+                    <option value="freefly">Freefly</option>
+                </select>
+                <br />
+
+                <div id="trackball-options">
+                    <label for="trackball-rotation-speed">Rotation speed:</label>
+                    <input id="trackball-rotation-speed" type="number" value="0.0001"" />
+                    <br />
+                    <label for="trackball-zoom-speed">Zoom speed:</label>
+                    <input id="trackball-zoom-speed" type="number" value="0.05" />
+                    <br />
+                    <label for="trackball-inertia-coef">Inertia coef:</label>
+                    <input id="trackball-inertia-coef" type="number" value="0.95" />
+                </div>
+
+                <div id="freefly-options" hidden>
+                    <label for="freefly-speed">Speed:</label>
+                    <input id="freefly-speed" type="number" value="0.01"" />
+                    <br />
+                    <label for="freefly-sensitivity">Sensitivity:</label>
+                    <input id="freefly-sensitivity" type="number" value="0.005" />
+                    <br />
+                    <label for="freefly-inertia-coef">Inertia coef:</label>
+                    <input id="freefly-inertia-coef" type="number" value="0.95" />
+                </div>
+            </fieldset>
+
         </div>
     </body>
 </html>

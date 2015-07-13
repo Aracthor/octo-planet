@@ -50,8 +50,8 @@ PlanetGenerator.prototype.addPointToCoords = function (coords, point) {
     coords.push(point.z * this.radius);
 };
 
-PlanetGenerator.prototype.calculateColor = function (point) {
-    var color = this.vertexPainter.paint(point);
+PlanetGenerator.prototype.calculateColor = function (height) {
+    var color = this.vertexPainter.paint(height);
     this.colors.push(color.r);
     this.colors.push(color.g);
     this.colors.push(color.b);
@@ -75,9 +75,9 @@ PlanetGenerator.prototype.calculateVerticesForTriangle = function (triangle) {
     } else {
         for (var j in triangle.coords) {
             var point = triangle.coords[j];
-            this.heightCalculator.calculate(point);
+            var height = this.heightCalculator.calculate(point);
+            this.calculateColor(height);
             this.addPointToCoords(this.coords, point);
-            this.calculateColor(point);
         }
         this.addTriangleToGrid(triangle);
     }
