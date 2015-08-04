@@ -1,8 +1,6 @@
 # octo-planet
 A WebGL planet generator.
 
-One day, a README shall be done.
-One day.
+This project was mainly a way to test my [libvvgl](https://github.com/Aracthor/libvvgl), a WebGL toolkit framework.
 
-But before that, you can try the [live version](http://aracthor.github.io/octo-planet/)!
-
+Rather than read a long an badly written, you can try the [live version](http://aracthor.github.io/octo-planet/)!
