@@ -19,8 +19,8 @@ OctoPlanet = function (canvasId) {
 	alight.color.b = 0.1;
     scene.getRoot().addChild(new VVGL.SceneNode(alight));
 
-    var skybox = new VVGL.Skybox(new VVGL.GLTexture("textures/stars.png"));
-    scene.setSkybox(skybox);
+    this.skybox = new VVGL.Skybox(new VVGL.GLTexture("textures/stars.png"));
+    scene.setSkybox(this.skybox);
 
     this.planetGenerator = new PlanetGenerator();
     this.planet = null;
@@ -37,6 +37,14 @@ OctoPlanet.prototype.setGridVisibility = function (visibility) {
     this.gridVisiblity = visibility;
     if (this.grid !== null) {
         this.grid.visible = visibility;
+    }
+};
+
+OctoPlanet.prototype.setSkyboxVisibility = function (visibility) {
+    if (visibility) {
+        this.scene.setSkybox(this.skybox);
+    } else {
+        this.scene.setSkybox(null);
     }
 };
 
