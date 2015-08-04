@@ -2,6 +2,7 @@ PlanetForm = function () {
     this.seed = document.getElementById("seed");
     this.tessellationInput = document.getElementById("tessellation-level");
     this.gridDisplay = document.getElementById("display-grid");
+    this.skyboxDisplay = document.getElementById("display-skybox");
     this.cameraType = document.getElementById("camera-type");
     this.configureTrackballCameraOptions();
 
@@ -58,6 +59,11 @@ PlanetForm.prototype.changeGridDisplay = function () {
     app.setGridVisibility(this.gridDisplay.checked);
 };
 
+PlanetForm.prototype.changeSkyboxDisplay = function () {
+    var app = VVGL.Application.access();
+    app.setSkyboxVisibility(this.skyboxDisplay.checked);
+};
+
 PlanetForm.prototype.changeCamera = function () {
     var type = this.cameraType.options[this.cameraType.selectedIndex].value;
 
@@ -87,6 +93,11 @@ PlanetForm.generateSeed = function () {
 PlanetForm.changeGridDisplay = function () {
     var planetForm = PlanetForm.getInstance();
     planetForm.changeGridDisplay();
+};
+
+PlanetForm.changeSkyboxDisplay = function () {
+    var planetForm = PlanetForm.getInstance();
+    planetForm.changeSkyboxDisplay();
 };
 
 PlanetForm.changeCamera = function () {
