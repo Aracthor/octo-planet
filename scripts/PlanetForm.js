@@ -7,6 +7,7 @@ PlanetForm = function () {
     this.configureTrackballCameraOptions();
 
     this.changeGridDisplay();
+    this.generateSeed();
 };
 
 
@@ -77,10 +78,11 @@ PlanetForm.prototype.changeCamera = function () {
 
 PlanetForm.instance = null;
 
+PlanetForm.create = function () {
+    PlanetForm.instance = new PlanetForm();
+}
+
 PlanetForm.getInstance = function () {
-    if (PlanetForm.instance === null) {
-        PlanetForm.instance = new PlanetForm();
-    }
     return PlanetForm.instance;
 };
 
