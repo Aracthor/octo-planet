@@ -2699,7 +2699,7 @@ VVGL.TrackballCamera.prototype.rotationSpeed = 0.0001;
  * @type {number}
  * @default
  */
-VVGL.TrackballCamera.prototype.zoomSpeed = 0.1;
+VVGL.TrackballCamera.prototype.zoomSpeed = 0.05;
 
 /**
  * Coefficient between 1 and 0 proportional to movement inertia.

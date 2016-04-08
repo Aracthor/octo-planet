@@ -20,11 +20,12 @@ OctoPlanet = function (canvasId) {
     scene.getRoot().addChild(new VVGL.SceneNode(alight));
 
     this.skybox = new VVGL.Skybox(new VVGL.GLTexture("textures/stars.png"));
-    scene.setSkybox(this.skybox);
 
     this.planetGenerator = new PlanetGenerator();
     this.planet = null;
     this.grid = null;
+
+    PlanetForm.create();
 };
 
 OctoPlanet.prototype = Object.create(VVGL.Application3D.prototype);
