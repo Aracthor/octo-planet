@@ -12,11 +12,13 @@
         <script type="text/javascript" src="scripts/libvvgl3D.js" ></script>
 
         <!-- WebGL scripts -->
-        <script type="text/javascript" src="scripts/HeightCalculator.js" ></script>
-        <script type="text/javascript" src="scripts/PlanetGenerator.js" ></script>
+        <script type="text/javascript" src="scripts/IPlanetGenerator.js" ></script>
         <script type="text/javascript" src="scripts/OctoPlanet.js" ></script>
-        <script type="text/javascript" src="scripts/VertexPainter.js" ></script>
         <script type="text/javascript" src="scripts/Triangle.js" ></script>
+        <script type="text/javascript" src="scripts/cube/CubeGenerator.js" ></script>
+        <script type="text/javascript" src="scripts/isocaedron/IsocaedronGenerator.js" ></script>
+        <script type="text/javascript" src="scripts/isocaedron/IsocaedronHeightCalculator.js" ></script>
+        <script type="text/javascript" src="scripts/isocaedron/VertexPainter.js" ></script>
         <script type="text/javascript" src="scripts/main.js" ></script>
 
         <!-- Forms scripts -->
@@ -29,6 +31,14 @@
 
                 <fieldset id="planet" style="width: 800px; text-align: left;">
                     <legend>Planet creation</legend>
+
+                    <label for="generator">Generator</label>
+                    <select id="generator" onchange="PlanetForm.changeGenerator();">
+                        <option value="cube-based" selected="selected">Cube-based</option>
+                        <option value="isocaedron-based">Isocaedron-based</option>
+                    </select>
+                    <br />
+
                     <label for="seed">Seed:</label>
                     <input id="seed" type="number" />
                     <button onclick="return PlanetForm.generateSeed();">Generate seed</button>
@@ -38,18 +48,22 @@
                     <input id="tessellation-level" type="number" value="5" />
                     <br />
 
-                    <label for="display-grid">Display grid</label>
-                    <input id="display-grid" type="checkbox" onclick="PlanetForm.changeGridDisplay();"/>
-                    <br />
-
-                    <label for="display-skybox">Display (putrid) skybox</label>
-                    <input id="display-skybox" type="checkbox" onclick="PlanetForm.changeSkyboxDisplay();"/>
-                    <br />
-                    <br />
-
                     <input type="submit" value="create" />
                 </fieldset>
             </form>
+
+            <fieldset id="display" style="width: 800px; text-align: left;">
+                <legend>Display</legend>
+
+                <label for="display-grid">Display grid</label>
+                <input id="display-grid" type="checkbox" onclick="PlanetForm.changeGridDisplay();"/>
+                <br />
+
+                <label for="display-skybox">Display (putrid) skybox</label>
+                <input id="display-skybox" type="checkbox" onclick="PlanetForm.changeSkyboxDisplay();"/>
+                <br />
+                <br />
+            </fieldset>
 
             <fieldset id="camera" style="width: 800px; text-align: left;">
                 <legend>Camera</legend>

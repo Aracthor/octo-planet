@@ -21,17 +21,30 @@ OctoPlanet = function (canvasId) {
 
     this.skybox = new VVGL.Skybox(new VVGL.GLTexture("textures/stars.png"));
 
-    this.planetGenerator = new PlanetGenerator();
     this.planet = null;
     this.grid = null;
 
     PlanetForm.create();
+
+    this.planetGenerator = this.chooseGenerator(PlanetForm.getInstance().getGenerator());
 };
 
 OctoPlanet.prototype = Object.create(VVGL.Application3D.prototype);
 
 OctoPlanet.prototype.manageData = function () {
 	VVGL.Application.prototype.manageData.call(this);
+};
+
+OctoPlanet.prototype.chooseGenerator = function (name) {
+    if (name == "cube-based") {
+        return new CubeGenerator();
+    } else if (name == "isocaedron-based") {
+        return new IsocaedronGenerator();
+    }
+};
+
+OctoPlanet.prototype.changeGenerator = function (generator) {
+    this.planetGenerator = this.chooseGenerator(generator);
 };
 
 OctoPlanet.prototype.setGridVisibility = function (visibility) {

@@ -1,8 +1,8 @@
-HeightCalculator = function () {
+IsocaedronHeightCalculator = function () {
 
 };
 
-HeightCalculator.prototype.init = function (random) {
+IsocaedronHeightCalculator.prototype.init = function (random) {
     this.attractions = [];
     for (var i = 0; i < 50; ++i) {
         var point = new VVGL.Vec3(random.randomFloat() * 2 - 1.0, random.randomFloat() * 2 - 1.0, random.randomFloat() * 2 - 1.0);
@@ -11,7 +11,7 @@ HeightCalculator.prototype.init = function (random) {
 };
 
 
-HeightCalculator.prototype.calcHeightAtPosition = function (position) {
+IsocaedronHeightCalculator.prototype.calcHeightAtPosition = function (position) {
     var height = -3;
 
     for (var i in this.attractions) {
@@ -25,7 +25,7 @@ HeightCalculator.prototype.calcHeightAtPosition = function (position) {
     return (height);
 };
 
-HeightCalculator.prototype.calculate = function (position) {
+IsocaedronHeightCalculator.prototype.calculate = function (position) {
     position.normalize();
     var height = this.calcHeightAtPosition(position);
     position.scale(1.00 + height / 1000);

@@ -1,4 +1,5 @@
 PlanetForm = function () {
+    this.generator = document.getElementById("generator");
     this.seed = document.getElementById("seed");
     this.tessellationInput = document.getElementById("tessellation-level");
     this.gridDisplay = document.getElementById("display-grid");
@@ -50,6 +51,15 @@ PlanetForm.prototype.getPlanetData = function () {
     return data;
 };
 
+PlanetForm.prototype.getGenerator = function () {
+    return this.generator.options[this.generator.selectedIndex].value;
+};
+
+
+PlanetForm.prototype.changeGenerator = function () {
+    var app = VVGL.Application.access();
+    app.changeGenerator(this.getGenerator());
+};
 
 PlanetForm.prototype.generateSeed = function () {
     this.seed.value = new Date().getTime();
@@ -84,6 +94,11 @@ PlanetForm.create = function () {
 
 PlanetForm.getInstance = function () {
     return PlanetForm.instance;
+};
+
+PlanetForm.changeGenerator = function () {
+    var planetForm = PlanetForm.getInstance();
+    planetForm.changeGenerator();
 };
 
 PlanetForm.generateSeed = function () {

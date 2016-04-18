@@ -1,10 +1,12 @@
-PlanetGenerator = function () {
-    this.heightCalculator = new HeightCalculator();
+IsocaedronGenerator = function () {
+    this.heightCalculator = new IsocaedronHeightCalculator();
     this.vertexPainter = new VertexPainter();
     this.radius = 5.0;
 };
 
-PlanetGenerator.prototype.getTrianglesList = function (tessellation) {
+IsocaedronGenerator.prototype = Object.create(IPlanetGenerator.prototype);
+
+IsocaedronGenerator.prototype.getTrianglesList = function (tessellation) {
     var X = 1.0;
     var Z = (X + Math.sqrt(5.0) * X) / 2.0;
 
@@ -44,13 +46,13 @@ PlanetGenerator.prototype.getTrianglesList = function (tessellation) {
     return triangles;
 };
 
-PlanetGenerator.prototype.addPointToCoords = function (coords, point) {
+IsocaedronGenerator.prototype.addPointToCoords = function (coords, point) {
     coords.push(point.x * this.radius),
     coords.push(point.y * this.radius),
     coords.push(point.z * this.radius);
 };
 
-PlanetGenerator.prototype.calculateColor = function (height) {
+IsocaedronGenerator.prototype.calculateColor = function (height) {
     var color = this.vertexPainter.paint(height);
     this.colors.push(color.r);
     this.colors.push(color.g);
@@ -58,7 +60,7 @@ PlanetGenerator.prototype.calculateColor = function (height) {
     this.colors.push(1.0);
 };
 
-PlanetGenerator.prototype.addTriangleToGrid = function (triangle) {
+IsocaedronGenerator.prototype.addTriangleToGrid = function (triangle) {
     this.addPointToCoords(this.gridCoords, triangle.coords[0]);
     this.addPointToCoords(this.gridCoords, triangle.coords[1]);
     this.addPointToCoords(this.gridCoords, triangle.coords[1]);
@@ -67,7 +69,7 @@ PlanetGenerator.prototype.addTriangleToGrid = function (triangle) {
     this.addPointToCoords(this.gridCoords, triangle.coords[0]);
 };
 
-PlanetGenerator.prototype.calculateVerticesForTriangle = function (triangle) {
+IsocaedronGenerator.prototype.calculateVerticesForTriangle = function (triangle) {
     if (triangle.subTriangles.length > 0) {
         for (var i in triangle.subTriangles) {
             this.calculateVerticesForTriangle(triangle.subTriangles[i]);
@@ -81,16 +83,15 @@ PlanetGenerator.prototype.calculateVerticesForTriangle = function (triangle) {
         }
         this.addTriangleToGrid(triangle);
     }
-
 };
 
-PlanetGenerator.prototype.calculateVertices = function () {
+IsocaedronGenerator.prototype.calculateVertices = function () {
     for (var i in this.triangles) {
         this.calculateVerticesForTriangle(this.triangles[i]);
     }
 };
 
-PlanetGenerator.prototype.generate = function (data) {
+IsocaedronGenerator.prototype.generate = function (data) {
     var random = new VVGL.Random(parseInt(data.seed));
     var planet = new VVGL.Mesh(VVGL.RenderMode.TRIANGLES);
     var grid = new VVGL.Mesh(VVGL.RenderMode.LINES);
